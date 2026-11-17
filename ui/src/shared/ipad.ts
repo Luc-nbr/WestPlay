@@ -77,14 +77,14 @@ export function installIpad(): void {
   // Safari shows a press (`:active`) on a touchscreen only on pages listening for touches.
   document.addEventListener('touchstart', () => {}, { passive: true })
   reportFrames()
-  // Gone to the background, or back (iPadOS stops a page there): told to Dashly's log.
+  // Gone to the background, or back (iPadOS stops a page there): told to Euro-Hub's log.
   document.addEventListener('visibilitychange', () => {
     ;(window as unknown as { westplayTell?: (text: string) => void }).westplayTell?.(`page ${document.visibilityState}`)
   })
 
   const listeners = new Set<Listener>()
   const queued: string[] = []
-  // Connected before: Dashly may have started again since, a newer build of it (a new app, a fix). The page asks
+  // Connected before: Euro-Hub may have started again since, a newer build of it (a new app, a fix). The page asks
   // for its own address again, and loads it anew if its scripts aren't these any more.
   let connectedBefore = false
   const ourScripts = () =>
@@ -280,18 +280,18 @@ function showPairing(): void {
   const dutch = navigator.language.toLowerCase().startsWith('nl')
   const say = dutch
     ? {
-        title: 'Koppel deze iPad met Dashly',
-        text: 'Voer de code in die Dashly op je pc toont (Vrachtwagenscherm › iPad).',
+        title: 'Koppel deze iPad met Euro-Hub',
+        text: 'Voer de code in die Euro-Hub op je pc toont (Vrachtwagenscherm › iPad).',
         button: 'Koppelen',
         wrong: 'Die code klopt niet.',
-        tip: 'Tip: zet Instellingen › Scherm en helderheid › Automatisch slot op Nooit, en voeg Dashly toe aan je beginscherm (Deel › Zet op beginscherm).',
+        tip: 'Tip: zet Instellingen › Scherm en helderheid › Automatisch slot op Nooit, en voeg Euro-Hub toe aan je beginscherm (Deel › Zet op beginscherm).',
       }
     : {
-        title: 'Pair this iPad with Dashly',
-        text: 'Enter the code Dashly shows on your PC (Truck Screen › iPad).',
+        title: 'Pair this iPad with Euro-Hub',
+        text: 'Enter the code Euro-Hub shows on your PC (Truck Screen › iPad).',
         button: 'Pair',
         wrong: 'That code isn’t right.',
-        tip: 'Tip: set Settings › Display & Brightness › Auto-Lock to Never, and add Dashly to your Home Screen (Share › Add to Home Screen).',
+        tip: 'Tip: set Settings › Display & Brightness › Auto-Lock to Never, and add Euro-Hub to your Home Screen (Share › Add to Home Screen).',
       }
   const box = document.createElement('div')
   box.style.cssText =

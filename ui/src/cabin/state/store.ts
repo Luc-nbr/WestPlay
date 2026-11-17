@@ -5,6 +5,8 @@ import {
   type Equalizer,
   FLAT,
   type HostMessage,
+  type TachoAlert,
+  type TouringTerminal,
   type GameWeather,
   hasTruck,
   type JobInfo,
@@ -315,6 +317,10 @@ export interface LiveState {
   /** The player's profile has the game's time zones on (its `g_time_zones`): the clock is the time where
    * the truck is (state/timeZone.ts). */
   timeZones: boolean
+  /** The tachograph's warning (shell/TachoBanner.tsx), as the host last said. */
+  tacho: { alert: TachoAlert | null; violation: string | null; ping: number } | null
+  /** The touring-coach company's driver's terminal (shell/CoachTerminal.tsx), as the host last said. */
+  touring: { company: string; trip: TouringTerminal | null } | null
   /** The player's profile is in miles and mph (its `g_mph`, Options › Regional settings): every speed and
    * distance shown in them; else kilometres and km/h. */
   mph: boolean
@@ -381,6 +387,8 @@ export const useLive = create<LiveState>()(() => ({
   gameLanguage: null,
   chosenLanguage: null,
   timeZones: false,
+  tacho: null,
+  touring: null,
   mph: false,
   clockShift: 0,
   route: null,
@@ -515,6 +523,12 @@ function receiveHostMessage(now: () => number): (message: HostMessage) => void {
         break
       case 'timeZones':
         useLive.setState({ timeZones: message.on })
+        break
+      case 'tacho':
+        useLive.setState({ tacho: { alert: message.alert, violation: message.violation, ping: message.ping } })
+        break
+      case 'touring':
+        useLive.setState({ touring: { company: message.company, trip: message.trip } })
         break
       case 'units':
         if (message.mph !== null) useLive.setState({ mph: message.mph })

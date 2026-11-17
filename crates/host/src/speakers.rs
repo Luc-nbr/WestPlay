@@ -1341,8 +1341,8 @@ fn is_new(wear: &u8) -> bool {
 }
 
 impl Equalizer {
-    /// How far each band goes, dB (owner 2026-10-22: a car stereo's tone range).
-    pub const MOST: i8 = 6;
+    /// How far each band goes, dB (owner 2026-11-17: 20 either way, the bass boosted by pulling the bass up).
+    pub const MOST: i8 = 20;
 
     /// Each band within [`Equalizer::MOST`] either way.
     pub fn clamped(self) -> Self {
@@ -1590,7 +1590,7 @@ mod tests {
     #[test]
     fn keeps_the_tone_within_a_car_stereos_range() {
         let wild = Equalizer { bass: -40, mid: 3, treble: 100, wear: 0, boost: 0, drive: 0 };
-        assert_eq!(wild.clamped(), Equalizer { bass: -6, mid: 3, treble: 6, wear: 0, boost: 0, drive: 0 });
+        assert_eq!(wild.clamped(), Equalizer { bass: -20, mid: 3, treble: 20, wear: 0, boost: 0, drive: 0 });
         assert_eq!(Equalizer::default().clamped(), Equalizer::default());
     }
 

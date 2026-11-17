@@ -49,7 +49,7 @@ export function TruckScreen({
               <iframe
                 ref={frame}
                 src="/cabin.html?demo&power"
-                title="Dashly"
+                title="Euro-Hub"
                 tabIndex={-1}
                 data-ready={ready || undefined}
               />

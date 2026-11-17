@@ -42,6 +42,8 @@ mod signin;
 pub mod speakers;
 mod spotify;
 pub mod startup;
+pub mod tacho;
+pub mod touring;
 mod typing;
 mod weather;
 mod webview;
@@ -146,6 +148,10 @@ pub struct Status {
     pub controller_press: Option<ControllerPress>,
     /// The announcements' slots (`announce`).
     pub announce: announce::AnnounceStatus,
+    /// The tachograph (`tacho`): where the driver stands, and its log (`None`: switched off).
+    pub tacho: Option<tacho::TachoStatus>,
+    /// The touring-coach company (`touring`): its catalogue, the trip driven, its books (`None`: switched off).
+    pub touring: Option<touring::TouringStatus>,
     pub error: Option<String>,
 }
 
@@ -394,6 +400,8 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
     let mut nearby_sent: Option<u64> = None;
     let mut last_nearby_post = Instant::now();
     let mut last_telemetry: Option<Telemetry> = None;
+    let mut tacho = tacho::Tachograph::start(&config.data_dir, config.settings.get().tacho.clock);
+    let mut touring = touring::Touring::start(&config.data_dir);
     let mut last_truck: Option<TruckInfo> = None;
     let mut last_job: Option<JobInfo> = None;
     let mut last_layout: Option<u32> = None;
@@ -1046,6 +1054,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         }
 
         while let Ok(player) = player_watch.updates.try_recv() {
+            tacho.profile(player.profile.clone());
             player_messages = player_messages_for(&player);
             for message in &player_messages {
                 let _ = webview.post_json(message);
@@ -1529,6 +1538,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                         }
                     }
                 }
+                Some(PageMessage::Touring { action }) => touring::request(action),
                 None => {}
             }
         }
@@ -1544,7 +1554,9 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         if let Some(answer) = route_changes.answer(&bridge.bridge().route, Instant::now()) {
             let reply: serde_json::Value = serde_json::from_str(&answer).unwrap_or_default();
             let id = reply["id"].as_u64().unwrap_or(0) as u32;
-            if id & FOLLOWING == 0 {
+            if id == COACH {
+                log!("[touring] the game's GPS set to the next stop: {}", reply["answer"].as_str().unwrap_or("?"));
+            } else if id & FOLLOWING == 0 {
                 let _ = webview.post_json(&answer);
             } else if let Some(follow) = following.as_mut().filter(|follow| follow.id == id & !FOLLOWING) {
                 // Handing a route over: once the game has it, its new route is compared (below).
@@ -2143,6 +2155,57 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
             }
         }
 
+        if tacho.due() {
+            let telemetry = last_telemetry.as_ref().filter(|_| game_running && status.game_connected);
+            let (tacho_status, message) =
+                tacho.tick(&config.data_dir, &config.settings.get().tacho, telemetry, last_truck.as_ref());
+            if let Some(message) = message {
+                let _ = webview.post_json(&message);
+            }
+            if status.tacho != tacho_status {
+                status.tacho = tacho_status;
+                (config.on_status)(&status);
+            }
+        }
+
+        if touring.due() {
+            let telemetry = last_telemetry.as_ref().filter(|_| game_running && status.game_connected);
+            touring.map(map_shown.0.as_ref().map(|folder| maps_dir.join(folder)));
+            let driving = status.tacho.as_ref().map(|t| t.summary.driving_since_break);
+            let pa = status.announce.talking || status.announce.playing.is_some() || status.announce.quick_recording;
+            let settings = config.settings.get().touring;
+            let (touring_status, message) = touring.tick(&config.data_dir, &settings, telemetry, driving, pa);
+            if let Some(message) = message {
+                let _ = webview.post_json(&message);
+            }
+            if status.touring != touring_status {
+                status.touring = touring_status;
+                (config.on_status)(&status);
+            }
+            // The game's GPS to the next stop, unless the player drives a job of the game's.
+            let on_job = last_job.is_some_and(|job| job.active);
+            if let Some(to) = touring.take_navigation()
+                && settings.navigate
+                && !on_job
+            {
+                match (to.node, &map_shown.0) {
+                    (Some(node), _) => {
+                        let block = &bridge.bridge().route;
+                        let follow = westplay_shared::RouteAction::Follow;
+                        let _ = route_changes.ask(block, COACH, follow, node, &[], Instant::now());
+                    }
+                    (None, Some(folder)) => planner.ask_nearest(COACH, &maps_dir, folder, to.x as f32, to.z as f32),
+                    (None, None) => {}
+                }
+            }
+        }
+        if let Some((id, node)) = planner.found()
+            && id == COACH
+        {
+            let block = &bridge.bridge().route;
+            let _ = route_changes.ask(block, COACH, westplay_shared::RouteAction::Follow, node, &[], Instant::now());
+        }
+
         if last_telemetry_post.elapsed() >= Duration::from_millis(50) {
             last_telemetry_post = Instant::now();
             let plugin = &bridge.bridge().plugin;
@@ -2153,6 +2216,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                 && last_telemetry != Some(telemetry)
             {
                 last_telemetry = Some(telemetry);
+                touring.observe(&telemetry, Instant::now());
                 let message = serde_json::json!({ "type": "telemetry", "data": telemetry });
                 let _ = webview.post_json(&message.to_string());
             }
@@ -2213,6 +2277,8 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         std::thread::sleep(Duration::from_millis(1));
     }
 
+    tacho.save(&config.data_dir);
+    touring.save(&config.data_dir);
     host.frame_generation.store(0, Ordering::Release);
     host.screen_enabled.store(0, Ordering::Release);
     host.pid.store(0, Ordering::Release);
@@ -2892,6 +2958,11 @@ enum PageMessage {
     /// What stopping at each of these map nodes (uids in hex) would add to the trip the game's route makes
     /// (`planner`); `{"type":"detours"}` comes back with `id`.
     Detours { id: u32, nodes: Vec<String> },
+    /// What the driver's terminal asks of the touring company (`touring::Action`).
+    Touring {
+        #[serde(flatten)]
+        action: touring::Action,
+    },
     /// A part of what the page keeps (`page_state`), by its storage key, changed (`None`: forgotten).
     PageState { key: String, value: Option<String> },
     /// What the page kept itself, handed over once when WestPlay keeps nothing yet (`page_state`).
@@ -2910,6 +2981,8 @@ struct Following {
 
 /// Marks a route request as the hand-over's own (its answer isn't the page's).
 const FOLLOWING: u32 = 1 << 31;
+/// The route request of the touring coach's next stop (`touring`): its answer isn't the page's.
+const COACH: u32 = (1 << 30) + 1;
 
 /// `{"type":"followed","id":4,"follows":true,"answer":"done"}`: whether the game's GPS follows the route the
 /// player picked (`answer`: "ownWay" when it takes another way however held, else the game's answer).
@@ -3220,6 +3293,14 @@ mod tests {
             Some(PageMessage::Typing { selection: 3 })
         );
         assert_eq!(
+            parse_page_message(r#"{"type":"touring","action":"start","id":12}"#),
+            Some(PageMessage::Touring { action: crate::touring::Action::Start { id: 12 } })
+        );
+        assert_eq!(
+            parse_page_message(r#"{"type":"touring","action":"skip"}"#),
+            Some(PageMessage::Touring { action: crate::touring::Action::Skip })
+        );
+        assert_eq!(
             parse_page_message(r#"{"type":"youtube","command":{"action":"pause"}}"#),
             Some(PageMessage::Youtube { command: crate::youtube::Command::Pause })
         );
@@ -3355,7 +3436,7 @@ mod tests {
             })
         );
         settings.screen.truck_strip = crate::settings::TruckStrip::Off;
-        settings.sound.equalizer = crate::speakers::Equalizer { bass: -9, mid: 2, treble: 6, wear: 0, boost: 0, drive: 0 };
+        settings.sound.equalizer = crate::speakers::Equalizer { bass: -29, mid: 2, treble: 6, wear: 0, boost: 0, drive: 0 };
         settings.look.wallpaper = Some("custom:Dusk".into());
         settings.look.icon_set = Some("Retro".into());
         settings.language = crate::settings::LanguageCode::new("de_de");
@@ -3365,11 +3446,11 @@ mod tests {
         assert_eq!(message["wallpaper"], "custom:Dusk");
         assert_eq!(message["iconSet"], "Retro");
         // Within the range, whatever the file says.
-        assert_eq!(message["equalizer"], serde_json::json!({ "bass": -6, "mid": 2, "treble": 6 }));
+        assert_eq!(message["equalizer"], serde_json::json!({ "bass": -20, "mid": 2, "treble": 6 }));
         // The curve is kept whichever is chosen; what plays is it, with Custom only.
         assert_eq!(settings.sound.playing(), crate::speakers::Equalizer::default());
         settings.sound.custom = true;
-        assert_eq!(settings.sound.playing(), crate::speakers::Equalizer { bass: -6, mid: 2, treble: 6, wear: 0, boost: 0, drive: 0 });
+        assert_eq!(settings.sound.playing(), crate::speakers::Equalizer { bass: -20, mid: 2, treble: 6, wear: 0, boost: 0, drive: 0 });
     }
 
     #[test]
@@ -3412,6 +3493,7 @@ mod tests {
             language: Some("tr_tr".into()),
             time_zones: true,
             mph: Some(true),
+            profile: None,
         };
         assert_eq!(
             super::player_messages_for(&player),

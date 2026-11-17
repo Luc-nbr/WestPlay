@@ -83,6 +83,37 @@ export interface Settings {
   }
   /** The language WestPlay speaks in the cab and here: one of the game's (`de_de`), or `null`: the game's. */
   language: string | null
+  /** The tachograph: on, its clock (the game's or the PC's), its warnings on the cab's screen. */
+  tacho: {
+    enabled: boolean
+    clock: 'game' | 'real'
+    cabWarnings: boolean
+    /** The driver's card in slot 1, whose it is, and the receipt printer's paper (58 or 80 mm). */
+    card: boolean
+    driver: string
+    paper: number
+  }
+  /** The touring-coach company: on, its name, its home town (a map city id; empty: the first Dutch one), the
+   * coach's seats, the game's GPS set to each next stop, announcements asked for. */
+  touring?: TouringSettings
+}
+
+export interface TouringSettings {
+  enabled: boolean
+  company: string
+  home: string
+  seats: number
+  navigate: boolean
+  announcements: boolean
+}
+
+export const TOURING_DEFAULTS: TouringSettings = {
+  enabled: true,
+  company: '',
+  home: '',
+  seats: 50,
+  navigate: true,
+  announcements: true,
 }
 
 /** Mirrors `westplay_host::settings::CoachSpeakers`: a coach plays through its driver's pair, or through every

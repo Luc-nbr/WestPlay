@@ -70,8 +70,185 @@ export interface HostStatus {
     engine: { driver: string; rate: number; buffer: number; inputMs: number; outputMs: number } | null
     error: string | null
   }
+  /** The tachograph (mirrors `westplay_host::tacho::TachoStatus`; `null`: switched off). */
+  tacho: TachoStatus | null
+  /** The touring-coach company (mirrors `westplay_host::touring::TouringStatus`; `null`: switched off). */
+  touring?: TouringStatus | null
   error: string | null
 }
+
+export type TouringStopKind = 'depot' | 'pickup' | 'coffee' | 'meal' | 'destination' | 'hotel' | 'excursion' | 'dropoff'
+export type TripKind = 'dayTrip' | 'tour' | 'school' | 'charter'
+
+/** A place: its name, where in the game's world (metres), how close counts. */
+export interface TouringPoint {
+  name: string
+  x: number
+  z: number
+  radius: number
+  node: string | null
+}
+
+export interface TouringStop {
+  kind: TouringStopKind
+  leg: 'boarding' | 'outbound' | 'stay' | 'return' | 'unloading' | 'toDepot'
+  point: TouringPoint
+  /** Planned (game minutes), the trip's day, passengers on or off here, when reached and left. */
+  at: number
+  day: number
+  passengers: number
+  reached: number | null
+  left: number | null
+  missed: boolean
+}
+
+/** A trip of the catalogue (or driven): the seat's price (a school's or charter's: the contract), game km. */
+export interface TouringTrip {
+  id: number
+  kind: TripKind
+  title: string
+  destination: string
+  days: number
+  departure: number
+  listed: number
+  price: number
+  seats: number
+  booked: number
+  distance: number
+  stops: TouringStop[]
+}
+
+export interface TouringMood {
+  punctuality: number
+  comfort: number
+  breaks: number
+  bonus: number
+  total: number
+}
+
+export interface TouringScore {
+  pickupsLate: number[]
+  harshBrakes: number
+  harshAccelerations: number
+  harshCorners: number
+  breaks: number
+  overruns: number
+  goodStops: number
+  shortStops: number
+  missedStops: number
+  announcements: number
+}
+
+export interface TouringActive {
+  trip: TouringTrip
+  next: number
+  phase: 'toFirstPickup' | 'boarding' | 'outbound' | 'stay' | 'return' | 'unloading' | 'toDepot' | 'done'
+  onBoard: number
+  toCollect: number
+  mood: TouringMood
+  score: TouringScore
+  meter: { litres: number; km: number; ferries: number }
+  distance: number | null
+  eta: number | null
+  late: number | null
+  prompt: { kind: string; place: string; at: number | null } | null
+}
+
+export interface TouringFinished {
+  id: number
+  kind: TripKind
+  destination: string
+  days: number
+  departure: number
+  ended: number
+  passengers: number
+  income: number
+  costs: { fuel: number; tolls: number; ferries: number; hotel: number; wage: number }
+  profit: number
+  mood: number
+  reputation: number
+  cancelled: boolean
+}
+
+export interface TouringStatus {
+  company: string
+  depot: string | null
+  balance: number
+  reputation: number
+  catalogue: TouringTrip[]
+  active: TouringActive | null
+  history: TouringFinished[]
+  recorded: { kind: TouringStopKind; point: TouringPoint }[]
+  /** The game's clock (game minutes; `null`: no game). */
+  now: number | null
+  mapReady: boolean
+}
+
+/** The tachograph: its clock (minutes: game minutes, or minutes since 1970), where the driver stands, its log
+ * (newest first). Every duration in minutes. */
+export interface TachoStatus {
+  enabled: boolean
+  clock: 'game' | 'real'
+  now: number
+  summary: {
+    activity: 'driving' | 'work' | 'available' | 'rest' | null
+    activityFor: number
+    drivingSinceBreak: number
+    breakLeft: number
+    breakNeeded: number
+    breakTaken: number
+    dayDriving: number
+    dayLimit: number
+    dayLeft: number
+    extendedDaysUsed: number
+    reducedRestsUsed: number
+    restDueIn: number
+    restTaken: number
+    weekDriving: number
+    weekLeft: number
+    fortnightDriving: number
+    fortnightLeft: number
+    nextLimit: 'break' | 'day' | 'week' | 'fortnight'
+    nextLeft: number
+  }
+  log: TachoLogEntry[]
+  /** Live from the game: speed (km/h), kilometres recorded, the truck, the game's clock (game minutes; `null`: no
+   * game), the driver's card in its slot. */
+  speed: number
+  distance: number
+  truck: string | null
+  gameTime: number | null
+  card: boolean
+  /** The game's profile played (its save): the card's driver and company, the card's number (the profile's own),
+   * and its kilometres, deliveries, experience and money; `null` until read. */
+  profile: TachoProfile | null
+}
+
+export interface TachoProfile {
+  name: string
+  company: string
+  cardNumber: string
+  distance: number
+  deliveries: number
+  experience: number
+  money: number
+}
+
+export type TachoLogEntry =
+  | { type: 'activity'; activity: 'driving' | 'work' | 'available' | 'rest'; start: number; end: number }
+  | {
+      type: 'violation'
+      kind:
+        | 'continuousDriving'
+        | 'dailyDriving'
+        | 'dailyRestLate'
+        | 'reducedRests'
+        | 'weeklyDriving'
+        | 'fortnightDriving'
+        | 'overspeed'
+      at: number
+      over: number
+    }
 
 export interface Adapter {
   /** What the player's choice is kept as (`Settings.graphics.gpu`). */

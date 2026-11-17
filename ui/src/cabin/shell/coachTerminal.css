@@ -1,0 +1,158 @@
+/* The touring coach's driver's terminal: a dark card at the top right, folding to a pill. */
+.coach-terminal {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(36%, 380px);
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 18px;
+  color: #fff;
+  background: rgb(22 24 28 / 0.88);
+  backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 10px 30px rgb(0 0 0 / 0.45);
+  font: inherit;
+  text-align: left;
+  --coach-accent: #34c759;
+}
+
+.coach-terminal small {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.coach-terminal header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.coach-terminal header b {
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.coach-terminal header span {
+  font-size: 14px;
+  color: rgb(255 255 255 / 0.7);
+}
+
+.coach-next {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.07);
+  box-shadow: inset 3px 0 0 var(--coach-accent);
+}
+
+.coach-next[data-tone='late'] {
+  --coach-accent: #ff9f0a;
+}
+
+.coach-next b {
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coach-next span {
+  font-size: 15px;
+  color: rgb(255 255 255 / 0.8);
+}
+
+.coach-next em {
+  font-style: normal;
+  color: var(--coach-accent);
+  font-weight: 600;
+}
+
+.coach-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 15px;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.coach-people b {
+  color: #fff;
+}
+
+.coach-mood {
+  margin-left: auto;
+}
+
+.coach-mood[data-mood='good'] b {
+  color: #34c759;
+}
+
+.coach-mood[data-mood='fair'] b {
+  color: #ffd60a;
+}
+
+.coach-mood[data-mood='poor'] b {
+  color: #ff453a;
+}
+
+.coach-prompt {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(10 132 255 / 0.22);
+  box-shadow: inset 0 0 0 1px rgb(10 132 255 / 0.55);
+  animation: coach-prompt 1.6s ease-in-out 3;
+}
+
+.coach-prompt small {
+  color: #64d2ff;
+}
+
+.coach-prompt p {
+  margin: 4px 0 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+@keyframes coach-prompt {
+  50% {
+    box-shadow: inset 0 0 0 2px #64d2ff;
+  }
+}
+
+.coach-skip {
+  align-self: flex-end;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.75);
+  background: rgb(255 255 255 / 0.1);
+  cursor: pointer;
+}
+
+.coach-folded {
+  flex-direction: row;
+  align-items: center;
+  width: auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.coach-folded [data-tone='late'] {
+  color: #ff9f0a;
+}

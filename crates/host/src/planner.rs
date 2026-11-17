@@ -40,6 +40,8 @@ struct Ask {
     /// The other end of the lane past the place: the route goes to the end it comes to last.
     also: Option<u64>,
     stops: Option<Vec<u64>>,
+    /// Only the map node nearest `x`, `z` (the touring coach's stops: `touring`).
+    nearest: bool,
 }
 
 /// The routes planned for a request, each as its map nodes (in order) and for the page.
@@ -58,6 +60,8 @@ pub struct Planner {
     planned: Receiver<Planned>,
     /// Detours worked out, for the page.
     detoured: Receiver<String>,
+    /// The map nodes nearest a place asked for: the request's id, the node's uid.
+    found: Receiver<(u32, u64)>,
     /// The last request's routes, by their place in its list: the one picked is handed to the game.
     pub last: Option<Planned>,
 }
@@ -67,17 +71,35 @@ impl Planner {
         let (asks, asked) = mpsc::channel::<Ask>();
         let (answer, planned) = mpsc::channel();
         let (detour_answer, detoured) = mpsc::channel();
+        let (found_answer, found) = mpsc::channel();
         std::thread::spawn(move || {
             let mut loaded: Option<(PathBuf, Arc<Graph>)> = None;
             while let Ok(first) = asked.recv() {
                 // Only the newest of each kind: the page asks again as the player picks another place.
-                let (mut routes, mut stops) = (None, None);
+                let (mut routes, mut stops, mut nearest) = (None, None, None);
                 for ask in std::iter::once(first).chain(asked.try_iter()) {
-                    if ask.stops.is_some() { stops = Some(ask) } else { routes = Some(ask) }
+                    if ask.nearest {
+                        nearest = Some(ask)
+                    } else if ask.stops.is_some() {
+                        stops = Some(ask)
+                    } else {
+                        routes = Some(ask)
+                    }
                 }
-                for ask in routes.into_iter().chain(stops) {
+                for ask in routes.into_iter().chain(stops).chain(nearest) {
                     if loaded.as_ref().is_none_or(|(path, _)| *path != ask.graph) {
                         loaded = read(&ask.graph, ask.scale).map(|graph| (ask.graph.clone(), Arc::new(graph)));
+                    }
+                    if ask.nearest {
+                        let uid = loaded.as_ref().and_then(|(_, graph)| {
+                            graph.nearest(ask.x, ask.z).map(|n| graph.nodes[n as usize].uid)
+                        });
+                        if let Some(uid) = uid
+                            && found_answer.send((ask.id, uid)).is_err()
+                        {
+                            return;
+                        }
+                        continue;
                     }
                     let sent = match &ask.stops {
                         Some(stops) => {
@@ -106,7 +128,7 @@ impl Planner {
                 }
             }
         });
-        Self { asks, planned, detoured, last: None }
+        Self { asks, planned, detoured, found, last: None }
     }
 
     /// Asks for the routes from the truck (at `x`, `z`, facing `heading`, the game's turns) to the map node
@@ -118,7 +140,7 @@ impl Planner {
         };
         let turn = heading * std::f32::consts::TAU;
         let facing = [-turn.sin(), -turn.cos()];
-        let _ = self.asks.send(Ask { id, graph, scale, x, z, facing, to, also, stops: None });
+        let _ = self.asks.send(Ask { id, graph, scale, x, z, facing, to, also, stops: None, nearest: false });
     }
 
     /// Asks what stopping at each of `stops` (map nodes) on the way from the truck to `to` would add.
@@ -134,7 +156,21 @@ impl Planner {
         let Some((graph, scale)) = graph_of(&maps.join(folder)) else { return };
         let turn = heading * std::f32::consts::TAU;
         let facing = [-turn.sin(), -turn.cos()];
-        let _ = self.asks.send(Ask { id, graph, scale, x, z, facing, to, also: None, stops: Some(stops) });
+        let ask = Ask { id, graph, scale, x, z, facing, to, also: None, stops: Some(stops), nearest: false };
+        let _ = self.asks.send(ask);
+    }
+
+    /// Asks for the map node nearest `x`, `z` (metres) on the map in `maps`/`folder`; `id` comes back with it
+    /// ([`Planner::found`]).
+    pub fn ask_nearest(&self, id: u32, maps: &Path, folder: &str, x: f32, z: f32) {
+        let Some((graph, scale)) = graph_of(&maps.join(folder)) else { return };
+        let ask = Ask { id, graph, scale, x, z, facing: [0.0, 0.0], to: 0, also: None, stops: None, nearest: true };
+        let _ = self.asks.send(ask);
+    }
+
+    /// A map node found nearest a place asked for, since last asked.
+    pub fn found(&self) -> Option<(u32, u64)> {
+        self.found.try_iter().last()
     }
 
     /// Detours worked out since last asked, for the page.
@@ -358,6 +394,7 @@ mod tests {
             to: 102,
             also: None,
             stops: None,
+            nearest: false,
         };
         assert_eq!(starts(&graph, &ask).first(), Some(&1));
         let planned = plan(&graph, &ask);
@@ -410,6 +447,7 @@ mod tests {
             to: 104,
             also: None,
             stops: None,
+            nearest: false,
         };
         assert_eq!(starts(&graph, &ask).first(), Some(&1));
         assert_eq!(plan(&graph, &ask).routes, vec![vec![101, 104]]);
@@ -463,7 +501,7 @@ mod tests {
         let length = (on.1 - first.1).hypot(on.2 - first.2);
         let facing = [(on.1 - first.1) / length, (on.2 - first.2) / length];
         let (nowhere, scale) = (PathBuf::new(), routing::DEFAULT_SCALE);
-        let ask = Ask { id: 1, graph: nowhere, scale, x, z, facing, to, also: None, stops: None };
+        let ask = Ask { id: 1, graph: nowhere, scale, x, z, facing, to, also: None, stops: None, nearest: false };
         for &n in starts(&graph, &ask).iter().take(3) {
             let node = graph.nodes[n as usize];
             println!("start candidate {:x} ({:.0}, {:.0})", node.uid, node.x, node.z);

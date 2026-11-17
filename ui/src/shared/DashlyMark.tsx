@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 
-/** Dashly's mark: its navy squircle and two chevrons (public/dashly-mark.svg), drawn inline so the chevrons can
+/** Euro-Hub's mark: its navy squircle and two chevrons (public/dashly-mark.svg), drawn inline so the chevrons can
  * move (dashly.css `.dashly-mark`). */
 export function DashlyMark({ size = 32, style }: { size?: number; style?: CSSProperties }) {
   return (

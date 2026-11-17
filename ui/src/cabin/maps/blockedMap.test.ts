@@ -8,16 +8,16 @@ const GAME_LANGUAGES =
   )
 
 describe('the HVT map message', () => {
-  it('is in every language the game has, naming HVT and Dashly', () => {
+  it('is in every language the game has, naming HVT and Euro-Hub', () => {
     expect(Object.keys(HVT_MAP_MESSAGES).sort()).toEqual(GAME_LANGUAGES)
     for (const message of Object.values(HVT_MAP_MESSAGES)) {
       expect(message).toContain('HVT')
-      expect(message).toContain('Dashly')
+      expect(message).toContain('Euro-Hub')
     }
   })
 
   it('says it in the game language, or English', () => {
-    expect(hvtMapMessage('en_us')).toBe('Maps by HVT are not allowed in Dashly. Contact Dashly to learn more.')
+    expect(hvtMapMessage('en_us')).toBe('Maps by HVT are not allowed in Euro-Hub. Contact Euro-Hub to learn more.')
     expect(hvtMapMessage('tr_tr')).toMatch(/^HVT haritalarına/)
     expect(hvtMapMessage('xx_mod')).toBe(HVT_MAP_MESSAGES.en_us)
     expect(hvtMapMessage(null)).toBe(HVT_MAP_MESSAGES.en_us)

@@ -304,7 +304,7 @@ fn serve(stream: TcpStream, shared: &Shared) -> io::Result<()> {
             "/pair" => pair(&mut stream, &request, shared)?,
             "/manifest.webmanifest" => {
                 let manifest = serde_json::json!({
-                    "name": "Dashly", "short_name": "Dashly", "start_url": "/", "display": "fullscreen",
+                    "name": "Euro-Hub", "short_name": "Euro-Hub", "start_url": "/", "display": "fullscreen",
                     "orientation": "landscape", "background_color": "#000000", "theme_color": "#0A1F44",
                     "icons": [{ "src": "/dashly.png", "sizes": "512x512", "type": "image/png" }],
                 });
@@ -367,7 +367,7 @@ fn ipad_page(page: &str) -> String {
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Dashly" />
+    <meta name="apple-mobile-web-app-title" content="Euro-Hub" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/dashly.png" />
     <script>window.westplayIpad = true

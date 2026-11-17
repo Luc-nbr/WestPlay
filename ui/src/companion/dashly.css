@@ -1,4 +1,4 @@
-/* Dashly's look over the companion's room (room.css, companion.css): the logo's navy and blue, and its motion.
+/* Euro-Hub's look over the companion's room (room.css, companion.css): the logo's navy and blue, and its motion.
    Loaded after both, so each rule here takes over the one it names. */
 
 .ob {
@@ -11,7 +11,7 @@
     radial-gradient(90% 70% at 100% 100%, rgb(10 31 68 / 0.95), transparent 60%), var(--room);
 }
 
-/* Switches and progress in Dashly's blue, not iOS's green. */
+/* Switches and progress in Euro-Hub's blue, not iOS's green. */
 .ob-switch[data-on] {
   background: var(--blue);
   box-shadow: 0 0 14px var(--blue-glow);
@@ -289,7 +289,7 @@
   color: var(--text-dim);
 }
 
-/* The music's sound presets: chips of glass, the one chosen in Dashly's blue. */
+/* The music's sound presets: chips of glass, the one chosen in Euro-Hub's blue. */
 .dashly-presets {
   display: flex;
   flex-wrap: wrap;
@@ -336,6 +336,8 @@
   display: block;
   width: 100%;
   height: auto;
+  /* As tall as fits beside the page's other groups (the curve kept in proportion, centred). */
+  max-height: 36svh;
   border-radius: 14px;
   background: radial-gradient(120% 90% at 20% 0%, rgb(59 107 255 / 0.16), transparent 60%), rgb(4 10 23 / 0.7);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
@@ -416,7 +418,7 @@
 
 .dashly-eq-values {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   margin-top: 10px;
 }

@@ -103,7 +103,7 @@ function WestPlayIntro() {
         <img src="/dashly-mark.svg" alt="" />
       </span>
       <span ref={wordmark} className="boot-intro-wordmark">
-        Dashly
+        Euro-Hub
       </span>
       <span className="boot-intro-powered">
         powered by <b>MOF Technologies</b>

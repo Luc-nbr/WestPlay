@@ -473,9 +473,9 @@ impl Processor {
     }
 }
 
-/// The music turned down while announcing and back up after: the music's own sound, which Dashly's players' browsers
+/// The music turned down while announcing and back up after: the music's own sound, which Euro-Hub's players' browsers
 /// (its child processes) play, each a Windows audio session of its own, faded to silence in a quarter of a second as
-/// the announcement starts and back to where it was over most of a second, a little after it ends. Dashly's own
+/// the announcement starts and back to where it was over most of a second, a little after it ends. Euro-Hub's own
 /// sound (the announcement) is another session: untouched.
 fn duck(shared: &Shared) {
     // SAFETY: this thread's COM, once.
@@ -515,14 +515,14 @@ fn duck(shared: &Shared) {
     }
 }
 
-/// The audio sessions of Dashly's child processes (its browsers' audio), on every speaker, with their volumes now.
+/// The audio sessions of Euro-Hub's child processes (its browsers' audio), on every speaker, with their volumes now.
 fn music_sessions() -> Vec<(windows::Win32::Media::Audio::ISimpleAudioVolume, f32)> {
     use windows::Win32::Media::Audio::{IAudioSessionControl2, IAudioSessionManager2, ISimpleAudioVolume};
     use windows::Win32::System::Diagnostics::ToolHelp::{
         CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
     };
     let ours = std::process::id();
-    // Every process's parent, to tell Dashly's own (its children's children too) from the rest.
+    // Every process's parent, to tell Euro-Hub's own (its children's children too) from the rest.
     let mut parents = std::collections::HashMap::new();
     // SAFETY: a snapshot of our own, read with an entry of ours, closed once read.
     unsafe {

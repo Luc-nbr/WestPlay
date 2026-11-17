@@ -195,7 +195,7 @@ const PROFILES: readonly ProfileEntry[] = [
   // finger could touch).
   {
     layout: 'tablet',
-    profile: { name: 'Dashly tablet', oemStrip: null, scale: 1, sidebarIcons: 1.25, sidebarButtons: 2 },
+    profile: { name: 'Euro-Hub tablet', oemStrip: null, scale: 1, sidebarIcons: 1.25, sidebarButtons: 2 },
   },
   // Oyuncuyusbis' coaches (mods), each on its Gps part (owner 2026-11-16: "all four busses get them in their GPS tablet
   // part just like Setra"): the Setra S 516 HD/2's and the Travego's tablet (20.1 x 12.2 cm), the Setra S 531 DT's

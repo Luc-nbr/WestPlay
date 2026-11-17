@@ -16,6 +16,9 @@ import { screenState } from './pages/page'
 import { ScreenPage } from './pages/ScreenPage'
 import { Setup } from './pages/Setup'
 import { Support } from './pages/Support'
+import { Tachograph } from './pages/Tachograph'
+import { Touringcar } from './pages/Touringcar'
+import { hm } from './pages/tachoWords'
 import { LanguageSheet } from './pages/LanguageSheet'
 import { UninstallSheet } from './pages/UninstallSheet'
 import { FinishUpdate, UpdateSheet } from './pages/UpdateSheet'
@@ -95,7 +98,7 @@ export function Companion() {
 const SECTIONS: SectionId[][] = [
   ['screen', 'customize'],
   ['controls', 'announce', 'audio'],
-  ['accounts', 'map'],
+  ['accounts', 'map', 'tacho', 'touring'],
   ['setup', 'about', 'support'],
 ]
 /** The sections in order: the tutorial's tour goes through them. */
@@ -121,6 +124,8 @@ const SECTION_GLOW: Record<SectionId, string> = {
   setup: GLOW.scan,
   about: GLOW.dashboard,
   support: GLOW.home,
+  tacho: GLOW.dashboard,
+  touring: GLOW.maps,
 }
 
 /** How long a page's words take to leave before the next one's arrive. */
@@ -307,6 +312,7 @@ function Room({
       data-power={powered || undefined}
       data-leaving-pc={leavingPc || undefined}
       data-phase={phase}
+      data-section={roomShown ? section : undefined}
       style={{ '--section-glow': SECTION_GLOW[section] } as CSSProperties}
       onPointerMove={tilt}
     >
@@ -366,6 +372,8 @@ function Room({
             {roomShown && section === 'setup' && <Setup {...page} />}
             {roomShown && section === 'about' && <About {...page} />}
             {roomShown && section === 'support' && <Support {...page} />}
+            {roomShown && section === 'tacho' && <Tachograph {...page} />}
+            {roomShown && section === 'touring' && <Touringcar {...page} />}
             {phase === 'tour' && (
               <TourCard cw={cw} section={section} last={section === TOUR[TOUR.length - 1]} next={nextInTour} />
             )}
@@ -468,15 +476,17 @@ function SectionList({
       .join(' & '),
     about: update ? cw.update.badge : version,
     support: '',
+    tacho: tachoValue(status),
+    touring: touringValue(status),
   }
 
   let place = 2
   return (
-    <nav ref={list} className="cp-list" aria-label="Dashly">
+    <nav ref={list} className="cp-list" aria-label="Euro-Hub">
       <header className="cp-brand ob-in" style={n(0)}>
         <DashlyMark size={34} />
         <span>
-          <b>Dashly</b>
+          <b>Euro-Hub</b>
           <span className="cp-state" data-state={state}>
             <i />
             {cw.state[state]}
@@ -564,4 +574,16 @@ function useShowWhenReady(ready: boolean) {
     })
     return () => cancelAnimationFrame(frame)
   }, [ready])
+}
+
+/** The list's line for the Touringcar: the company's balance, while it's on. */
+function touringValue(status: HostStatus | null): string {
+  const touring = status?.touring
+  return touring ? `€ ${Math.round(touring.balance).toLocaleString('nl-NL')}` : ''
+}
+
+/** The list's line for the Tachograph: the time left to the next limit, while it's on and something's recorded. */
+function tachoValue(status: HostStatus | null): string {
+  const summary = status?.tacho?.summary
+  return summary?.activity ? hm(summary.nextLeft) : ''
 }

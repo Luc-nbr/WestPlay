@@ -110,9 +110,9 @@ describe('connectHost', () => {
     const disconnect = connectHost(() => 0)
     expect(useCabin.getState().equalizer).toEqual({ bass: 0, mid: 0, treble: 0 })
 
-    // As the host keeps it; whatever it sends, each band whole dB within ±6 (none said: flat).
+    // As the host keeps it; whatever it sends, each band whole dB within ±20 (none said: flat).
     webview.send({ type: 'settings', truckStrip: 'auto', equalizer: { bass: -3, mid: 2.4, treble: 40 } })
-    expect(useCabin.getState().equalizer).toEqual({ bass: -3, mid: 2, treble: 6 })
+    expect(useCabin.getState().equalizer).toEqual({ bass: -3, mid: 2, treble: 20 })
     webview.send({ type: 'settings', truckStrip: 'auto' })
     expect(useCabin.getState().equalizer).toEqual({ bass: 0, mid: 0, treble: 0 })
 
@@ -123,15 +123,15 @@ describe('connectHost', () => {
     expect(useCabin.getState().equalizer).toEqual({ bass: -4, mid: 0, treble: 0 })
     expect(useCabin.getState().equalizerCustom).toBe(true)
     expect(webview.posted.at(-1)).toEqual({ type: 'equalizer', custom: true, bass: -4, mid: 0, treble: 0 })
-    useCabin.getState().setEqualizerBand('treble', 9)
-    expect(webview.posted.at(-1)).toEqual({ type: 'equalizer', custom: true, bass: -4, mid: 0, treble: 6 })
+    useCabin.getState().setEqualizerBand('treble', 29)
+    expect(webview.posted.at(-1)).toEqual({ type: 'equalizer', custom: true, bass: -4, mid: 0, treble: 20 })
     // Recommended: the curve kept, flat played.
     useCabin.getState().chooseEqualizer(false)
-    expect(webview.posted.at(-1)).toEqual({ type: 'equalizer', custom: false, bass: -4, mid: 0, treble: 6 })
+    expect(webview.posted.at(-1)).toEqual({ type: 'equalizer', custom: false, bass: -4, mid: 0, treble: 20 })
     webview.send({
       type: 'settings',
       truckStrip: 'auto',
-      equalizer: { bass: -4, mid: 0, treble: 6 },
+      equalizer: { bass: -4, mid: 0, treble: 20 },
       equalizerCustom: true,
     })
     expect(useCabin.getState().equalizerCustom).toBe(true)

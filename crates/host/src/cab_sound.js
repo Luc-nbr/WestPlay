@@ -105,8 +105,9 @@ window.westplayCabSound = (media, say) => {
     const { currentTime } = audio.context
     const set = (param, value) => (atOnce ? param.setValueAtTime(value, currentTime) : param.setTargetAtTime(value, currentTime, 0.05))
     TONE.forEach(([band], i) => set(audio.tone.bands[i].gain, equalizer[band]))
+    // Turned down by part of the most any band lifts (a 20 dB bass still booms, the rest only a little quieter).
     const lift = Math.max(0, ...TONE.map(([band]) => equalizer[band]))
-    set(audio.tone.trim.gain, 10 ** (-lift / 20))
+    set(audio.tone.trim.gain, 10 ** (-(lift * 0.45) / 20))
   }
   // The music's spectrum, while the cab's Equalizer asks for it (`spectrum(true)`): BARS bars from LOWEST to
   // HIGHEST Hz, spaced by octaves (as the ear hears them), each its loudest bin's loudness (0 to 255), measured

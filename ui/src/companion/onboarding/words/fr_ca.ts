@@ -8,7 +8,7 @@ export const words: Words = {
   summary: { ...france.summary, chosen: 'Dossier personnalisé' },
   install: {
     ...france.install,
-    sub: 'Dashly ajoute au jeu un plugiciel qui charge ses écrans à chaque partie : rien à activer dans le Gestionnaire de mods. Les fichiers du jeu restent intacts, et la désinstallation de Dashly retire tout.',
+    sub: 'Euro-Hub ajoute au jeu un plugiciel qui charge ses écrans à chaque partie : rien à activer dans le Gestionnaire de mods. Les fichiers du jeu restent intacts, et la désinstallation d’Euro-Hub retire tout.',
     plugin: 'Plugiciel',
     banners: {
       ...france.install.banners,
@@ -16,7 +16,7 @@ export const words: Words = {
     },
     closeToInstall: {
       title: 'Fermez d’abord le jeu.',
-      text: 'Dashly ne peut pas s’installer pendant que le jeu roule.',
+      text: 'Euro-Hub ne peut pas s’installer pendant que le jeu roule.',
     },
     inUse: {
       title: 'Fermez d’abord le jeu.',
@@ -31,6 +31,6 @@ export const words: Words = {
       text: 'Le plugiciel ne peut pas être installé sans elle. Réessayez et choisissez « Oui ».',
     },
     pluginFailed: 'Le plugiciel n’a pas pu être installé.',
-    noPlugin: 'Le plugiciel manque dans cette copie de Dashly. Réinstallez Dashly.',
+    noPlugin: 'Le plugiciel manque dans cette copie d’Euro-Hub. Réinstallez Euro-Hub.',
   },
 }

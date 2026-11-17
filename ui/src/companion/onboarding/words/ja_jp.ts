@@ -6,7 +6,7 @@ export const words: Words = {
   continue: '続ける',
   welcome: {
     title: 'キャビンに CarPlay を',
-    sub: 'Dashly は、Euro Truck Simulator 2 と American Truck Simulator のトラックの画面に CarPlay を表示します。設定は数分で終わります。',
+    sub: 'Euro-Hub は、Euro Truck Simulator 2 と American Truck Simulator のトラックの画面に CarPlay を表示します。設定は数分で終わります。',
     start: 'はじめる',
   },
   summary: {
@@ -23,9 +23,9 @@ export const words: Words = {
     titleMissing: 'ゲームが見つかりません',
     found: 'この PC でゲームが見つかりました。',
     foundMany: 'ゲームが複数の場所にインストールされています。プレイしている方を選んでください。',
-    foundBoth: 'この PC で両方のゲームが見つかりました。Dashly はそれぞれに設定されます。',
+    foundBoth: 'この PC で両方のゲームが見つかりました。Euro-Hub はそれぞれに設定されます。',
     missing:
-      'Dashly はゲームを見つけられませんでした。ゲームをインストールしたフォルダー（base.scs が入っているフォルダー）を選んでください。',
+      'Euro-Hub はゲームを見つけられませんでした。ゲームをインストールしたフォルダー（base.scs が入っているフォルダー）を選んでください。',
     chooseAnother: '別のフォルダーを使う…',
     chooseFolder: 'フォルダーを選ぶ…',
     picker: 'ゲームのフォルダーを選んでください',
@@ -34,7 +34,7 @@ export const words: Words = {
     gameGone: 'ゲームはもうこのフォルダーにありません。',
     closeToGoOn: {
       title: 'ゲームを終了してください。',
-      text: 'Dashly の設定は、ゲームを終了しているときにだけ行えます。',
+      text: 'Euro-Hub の設定は、ゲームを終了しているときにだけ行えます。',
     },
   },
   check: {
@@ -45,7 +45,7 @@ export const words: Words = {
     notYet: 'まだ対応していません',
     title: '確認結果',
     titleNotYet: 'まだ対応していません',
-    cantInstall: 'Dashly はこのバージョンのゲームにまだ対応していません。',
+    cantInstall: 'Euro-Hub はこのバージョンのゲームにまだ対応していません。',
     version: 'バージョン',
     unknown: '不明',
     dlcs: 'DLC',
@@ -54,7 +54,7 @@ export const words: Words = {
     untested: 'このバージョンでの動作はまだ確認していませんが、ほぼ問題なく動くはずです。',
     otherCarPlay: {
       title: 'YMN One を削除してください',
-      text: '別の CarPlay MOD「YMN One」がゲームにインストールされています（plugins フォルダーの YamanDriveBridge.dll）。トラックの GPS 画面を YMN One が使っているため Dashly を表示できず、YMN One が動いていないときは画面がピンク色になります。ゲームを終了して、そのファイルを削除してください。',
+      text: '別の CarPlay MOD「YMN One」がゲームにインストールされています（plugins フォルダーの YamanDriveBridge.dll）。トラックの GPS 画面を YMN One が使っているため Euro-Hub を表示できず、YMN One が動いていないときは画面がピンク色になります。ゲームを終了して、そのファイルを削除してください。',
     },
     trucks: 'トラック',
     truckNotYet: 'まだ対応していません',
@@ -63,29 +63,29 @@ export const words: Words = {
     notInGame: 'ゲームにありません',
     scania7: 'Scania S・R – 7 インチ画面',
     scaniaSmartDash: 'Scania S・R – Smart Dash',
-    anyTruckTablet: 'どのトラックでも – Dashly タブレットで',
+    anyTruckTablet: 'どのトラックでも – Euro-Hub タブレットで',
     profiles: 'プロフィール',
     profileCount: { other: 'プロフィール {n} 件' },
     noProfiles: 'まだプロフィールがありません',
-    noProfilesDetail: '最初のプロフィールを作ると、Dashly がそのマップを準備します。',
+    noProfilesDetail: '最初のプロフィールを作ると、Euro-Hub がそのマップを準備します。',
     baseMap: 'オリジナルマップ',
     withMods: '{map}＋{mods}',
     unreadable: { other: 'マップ MOD {n} 個を読み込めなかったため、その変更はマップに表示されません' },
     mapNote:
-      'Dashly は、最後にプレイしたプロフィールから順に、プロフィールごとにマップを準備します。マップの準備はゲームを終了している間に行われます。',
+      'Euro-Hub は、最後にプレイしたプロフィールから順に、プロフィールごとにマップを準備します。マップの準備はゲームを終了している間に行われます。',
   },
   install: {
-    title: 'Dashly をインストール',
-    titleDone: 'Dashly をインストールしました',
-    sub: 'Dashly はゲームにプラグインを追加します。ゲームを起動するたびに、このプラグインが Dashly のトラック画面を読み込むので、MOD マネージャーで有効にする必要はありません。ゲーム本体のファイルは変更せず、Dashly をアンインストールするとすべて元に戻ります。',
+    title: 'Euro-Hub をインストール',
+    titleDone: 'Euro-Hub をインストールしました',
+    sub: 'Euro-Hub はゲームにプラグインを追加します。ゲームを起動するたびに、このプラグインが Euro-Hub のトラック画面を読み込むので、MOD マネージャーで有効にする必要はありません。ゲーム本体のファイルは変更せず、Euro-Hub をアンインストールするとすべて元に戻ります。',
     install: 'インストール',
     tryAgain: 'もう一度試す',
     asAdministrator: '管理者としてインストール',
     plugin: 'プラグイン',
-    pluginDetail: 'トラックの画面に Dashly を表示します',
+    pluginDetail: 'トラックの画面に Euro-Hub を表示します',
     banners: {
       installing: { title: 'インストールしています…' },
-      done: { title: 'Dashly をインストールしました', text: 'ゲームの準備ができました' },
+      done: { title: 'Euro-Hub をインストールしました', text: 'ゲームの準備ができました' },
       permission: { title: '許可が必要です', text: 'Windows が一度だけ確認します' },
       inUse: { title: 'ゲームを終了してください', text: 'ゲームがプラグインを使用中です' },
       failed: { title: 'インストールが完了しませんでした', text: '詳しくは左側をご覧ください' },
@@ -93,7 +93,7 @@ export const words: Words = {
     },
     closeToInstall: {
       title: 'ゲームを終了してください。',
-      text: 'ゲームの起動中は Dashly をインストールできません。',
+      text: 'ゲームの起動中は Euro-Hub をインストールできません。',
     },
     inUse: {
       title: 'ゲームを終了してください。',
@@ -108,13 +108,13 @@ export const words: Words = {
       text: '許可がないとプラグインをインストールできません。もう一度試して「はい」を選んでください。',
     },
     pluginFailed: 'プラグインをインストールできませんでした。',
-    modFailed: 'ゲームのデータから Dashly のトラック画面を準備できませんでした。',
-    noPlugin: 'この Dashly にはプラグインが含まれていません。Dashly を再インストールしてください。',
+    modFailed: 'ゲームのデータから Euro-Hub のトラック画面を準備できませんでした。',
+    noPlugin: 'この Euro-Hub にはプラグインが含まれていません。Euro-Hub を再インストールしてください。',
     noDocuments: 'ドキュメント フォルダーが見つかりませんでした。',
   },
   speed: {
     title: 'マップをどれくらいの速さで作りますか？',
-    sub: '次に、Dashly をゲームにインストールし、プロフィールごとにマップを作ります。しばらくの間、PC に大きな負荷がかかります。メモリーが十分にあり、プロセッサーが高性能なら、すべてを使って早く終わらせることができます。迷ったらオフのままにしてください。あとで「マップ」ページで変更できます。',
+    sub: '次に、Euro-Hub をゲームにインストールし、プロフィールごとにマップを作ります。しばらくの間、PC に大きな負荷がかかります。メモリーが十分にあり、プロセッサーが高性能なら、すべてを使って早く終わらせることができます。迷ったらオフのままにしてください。あとで「マップ」ページで変更できます。',
     confirm: 'このページを読み、選択を確認しました。',
   },
   map: {
@@ -125,12 +125,12 @@ export const words: Words = {
       building: 'マップを準備しています',
       ready: { title: 'マップの準備ができました', text: 'DLC とマップ MOD も反映済み' },
       waiting: { title: 'ゲームを終了してください', text: 'マップはゲームを終了している間に作られます' },
-      failed: { title: 'マップを準備できませんでした', text: 'Dashly があとでもう一度試します' },
+      failed: { title: 'マップを準備できませんでした', text: 'Euro-Hub があとでもう一度試します' },
       getting: '準備しています…',
     },
     waiting: {
       title: 'ゲームを終了してください。',
-      text: 'マップの準備には多くのメモリが必要なため、Dashly はゲームが終了するまで待ちます。',
+      text: 'マップの準備には多くのメモリが必要なため、Euro-Hub はゲームが終了するまで待ちます。',
     },
     stages: {
       reading: { now: 'ゲームのマップを読み込んでいます', done: 'ゲームのマップを読み込みました' },
@@ -153,7 +153,7 @@ export const words: Words = {
   },
   accounts: {
     title: 'YouTube にログイン',
-    sub: '任意です。ログインすると、おすすめ、登録チャンネル、履歴がトラックの画面に表示されます。ログインは Google の別ウィンドウで行うため、Dashly がアカウント情報を見ることはありません。',
+    sub: '任意です。ログインすると、おすすめ、登録チャンネル、履歴がトラックの画面に表示されます。ログインは Google の別ウィンドウで行うため、Euro-Hub がアカウント情報を見ることはありません。',
     signIn: 'ログイン',
     signOut: 'ログアウト',
     signedIn: 'ログイン済み',
@@ -164,19 +164,19 @@ export const words: Words = {
   },
   spotify: {
     title: 'Spotify にログイン',
-    sub: '任意です。ログインすると、自分のプレイリストやライブラリの Spotify をトラックの画面で聴けます。ログインは Spotify の別ウィンドウで行うため、Dashly がアカウント情報を見ることはありません。',
+    sub: '任意です。ログインすると、自分のプレイリストやライブラリの Spotify をトラックの画面で聴けます。ログインは Spotify の別ウィンドウで行うため、Euro-Hub がアカウント情報を見ることはありません。',
     finishInWindow: 'Spotify のウィンドウでログインを完了してください',
     signingIn: { title: 'Spotify にログインしています', text: 'Spotify のウィンドウで続けてください' },
   },
   discord: {
     title: "Sign in to Discord",
-    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Euro-Hub never sees your account.",
     finishInWindow: "Finish signing in in the Discord window",
     signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
   },
   appleMusic: {
     title: 'Apple Music にログイン',
-    sub: '任意です。ログインすると、自分のプレイリストやライブラリの Apple Music をトラックの画面で聴けます。ログインは Apple Music の別ウィンドウで行うため、Dashly がアカウント情報を見ることはありません。',
+    sub: '任意です。ログインすると、自分のプレイリストやライブラリの Apple Music をトラックの画面で聴けます。ログインは Apple Music の別ウィンドウで行うため、Euro-Hub がアカウント情報を見ることはありません。',
     finishInWindow: 'Apple Music のウィンドウでログインを完了してください',
     signingIn: { title: 'Apple Music にログインしています', text: 'Apple Music のウィンドウで続けてください' },
   },
@@ -186,11 +186,11 @@ export const words: Words = {
     steps: [
       {
         title: 'ゲームを起動',
-        text: '「高度な SDK 機能の使用リクエストが検出されました.」と表示されたら「OK」を選んでください。このメッセージは Dashly によるものです。',
+        text: '「高度な SDK 機能の使用リクエストが検出されました.」と表示されたら「OK」を選んでください。このメッセージは Euro-Hub によるものです。',
       },
       {
         title: 'トラックに乗り込む',
-        text: '電源を入れると、画面に Dashly が表示されます。プレイ中は Dashly を開いたままにしてください。',
+        text: '電源を入れると、画面に Euro-Hub が表示されます。プレイ中は Euro-Hub を開いたままにしてください。',
       },
       {
         title: '出発',

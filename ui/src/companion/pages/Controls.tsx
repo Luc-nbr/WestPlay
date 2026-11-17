@@ -89,8 +89,16 @@ export function AudioPage({ settings: state, status, cw }: PageProps) {
   useScreenAt('home', GLOW.home, null)
   return (
     <Panel place="page" title={w.audio} sub={w.audioSub}>
-      {settings && <AudioSetup settings={settings} update={update} status={status} w={w} />}
-      {settings && <MusicSound settings={settings} update={update} w={w} />}
+      {settings && (
+        <div className="cp-columns">
+          <div>
+            <AudioSetup settings={settings} update={update} status={status} w={w} />
+          </div>
+          <div>
+            <MusicSound settings={settings} update={update} w={w} />
+          </div>
+        </div>
+      )}
       {error && <Note tone="bad">{error}</Note>}
     </Panel>
   )
@@ -600,14 +608,14 @@ interface Preset {
 
 const PRESETS: Preset[] = [
   { id: 'flat', bass: 0, mid: 0, treble: 0, boost: 0, drive: 0 },
-  { id: 'bassBoost', bass: 4, mid: 0, treble: 1, boost: 60, drive: 0 },
-  { id: 'superBass', bass: 6, mid: -1, treble: 0, boost: 100, drive: 15 },
-  { id: 'vocal', bass: -2, mid: 4, treble: 2, boost: 0, drive: 0 },
-  { id: 'bright', bass: -1, mid: 1, treble: 5, boost: 0, drive: 0 },
-  { id: 'loudness', bass: 4, mid: -1, treble: 4, boost: 20, drive: 0 },
-  { id: 'rock', bass: 3, mid: -1, treble: 3, boost: 20, drive: 20 },
-  { id: 'radio', bass: -4, mid: 5, treble: -4, boost: 0, drive: 35 },
-  { id: 'distorted', bass: 2, mid: 1, treble: 1, boost: 40, drive: 80 },
+  { id: 'bassBoost', bass: 10, mid: 0, treble: 2, boost: 0, drive: 0 },
+  { id: 'superBass', bass: 18, mid: -2, treble: 0, boost: 0, drive: 15 },
+  { id: 'vocal', bass: -3, mid: 6, treble: 3, boost: 0, drive: 0 },
+  { id: 'bright', bass: -2, mid: 2, treble: 8, boost: 0, drive: 0 },
+  { id: 'loudness', bass: 7, mid: -2, treble: 6, boost: 0, drive: 0 },
+  { id: 'rock', bass: 6, mid: -2, treble: 5, boost: 0, drive: 20 },
+  { id: 'radio', bass: -8, mid: 8, treble: -8, boost: 0, drive: 35 },
+  { id: 'distorted', bass: 6, mid: 2, treble: 2, boost: 0, drive: 80 },
 ]
 
 /**
@@ -863,14 +871,14 @@ function ToneCurve({
   const [tone, setTone] = useState<Tone | null>(null)
   const sent = useRef(0)
   const save = (next: Tone) =>
-    set({ custom: true, equalizer: { bass: next.bass, mid: next.mid, treble: next.treble }, boost: next.boost })
+    set({ custom: true, equalizer: { bass: next.bass, mid: next.mid, treble: next.treble }, boost: 0 })
   const shown = tone ?? saved
   const db = (value: number) => `${value > 0 ? '+' : ''}${value} dB`
   return (
     <div className="ob-row dashly-eq-row">
       <EqCurve
         tone={shown}
-        names={{ bass: w.bass, mid: w.mid, treble: w.treble, boost: w.bassBoost }}
+        names={{ bass: w.bass, mid: w.mid, treble: w.treble }}
         change={(next) => {
           setTone(next)
           const now = performance.now()
@@ -885,10 +893,6 @@ function ToneCurve({
         }}
       />
       <div className="dashly-eq-values">
-        <span>
-          <b>{w.bassBoost}</b>
-          {shown.boost}%
-        </span>
         <span>
           <b>{w.bass}</b>
           {db(shown.bass)}

@@ -19,6 +19,8 @@ import { routeClicksDuringTransitions } from './shell/clickThrough'
 import { installDragScroll } from './shell/dragScroll'
 import { Cursor } from './shell/Cursor'
 import { Shell } from './shell/Shell'
+import { CoachTerminal } from './shell/CoachTerminal'
+import { TachoBanner } from './shell/TachoBanner'
 import { showBrightness, showVolume } from './shell/volumeShown'
 import { type Route, routeKey } from './state/navigation'
 import { nextPhaseAt, type PowerPhase } from './state/power'
@@ -86,6 +88,8 @@ export function CabinApp() {
       overlay={
         <>
           {FOLLOW_POWER && phase !== 'on' && <BootScreen phase={phase} />}
+          {powered && <TachoBanner />}
+          {powered && <CoachTerminal />}
           {/* In a plain browser the system cursor is there already. */}
           {isInHost() && !IS_IPAD && <Cursor />}
         </>

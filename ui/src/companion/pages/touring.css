@@ -1,0 +1,96 @@
+/* The Touringcar page: the company's books, the mood's meters, recording a place. */
+
+.touring-books {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+
+.touring-books > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.touring-books span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.touring-books b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.touring-books b[data-negative] {
+  color: #ff453a;
+}
+
+.touring-mood {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.touring-meter {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.06);
+  font-size: 14px;
+  --touring-tone: #34c759;
+}
+
+.touring-meter[data-tone='fair'] {
+  --touring-tone: #ffd60a;
+}
+
+.touring-meter[data-tone='poor'] {
+  --touring-tone: #ff453a;
+}
+
+.touring-meter b {
+  color: var(--touring-tone);
+  font-variant-numeric: tabular-nums;
+}
+
+.touring-meter i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--touring-tone);
+}
+
+.touring-record {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.touring-record select {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  color: inherit;
+  background: rgb(255 255 255 / 0.1);
+}
+
+.touring-seats {
+  width: 70px;
+}

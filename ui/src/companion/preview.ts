@@ -106,6 +106,8 @@ let settings: Settings = {
     streamOutput: null,
   },
   language: null,
+  tacho: { enabled: true, clock: 'game', cabWarnings: true, card: false, driver: '', paper: 80 },
+  touring: { enabled: true, company: 'Reizen de Vries', home: '', seats: 50, navigate: true, announcements: true },
 }
 
 // The player's own, made up from WestPlay's files (the preview's address: `FILES_BASE` is `/` here).
@@ -225,7 +227,62 @@ function status(): HostStatus {
       engine: { driver: 'WASAPI', rate: 48000, buffer: 128, inputMs: 8.2, outputMs: 9.1 },
       error: null,
     },
+    tacho: settings.tacho.enabled ? previewTacho() : null,
+    touring: null,
     error: null,
+  }
+}
+
+/** A made-up tachograph: Wednesday afternoon, driving for 3 hours since the last break. */
+function previewTacho(): HostStatus['tacho'] {
+  const now = 2 * 1440 + 15 * 60 + 12
+  return {
+    enabled: true,
+    clock: settings.tacho.clock,
+    now,
+    summary: {
+      activity: 'driving',
+      activityFor: 184,
+      drivingSinceBreak: 256,
+      breakLeft: 14,
+      breakNeeded: 30,
+      breakTaken: 0,
+      dayDriving: 372,
+      dayLimit: 600,
+      dayLeft: 228,
+      extendedDaysUsed: 1,
+      reducedRestsUsed: 0,
+      restDueIn: 8 * 60 + 10,
+      restTaken: 0,
+      weekDriving: 1490,
+      weekLeft: 3360 - 1490,
+      fortnightDriving: 4100,
+      fortnightLeft: 5400 - 4100,
+      nextLimit: 'break',
+      nextLeft: 14,
+    },
+    log: [
+      { type: 'activity', activity: 'driving', start: now - 184, end: now },
+      { type: 'activity', activity: 'rest', start: now - 204, end: now - 184 },
+      { type: 'activity', activity: 'driving', start: now - 276, end: now - 204 },
+      { type: 'activity', activity: 'work', start: now - 300, end: now - 276 },
+      { type: 'violation', kind: 'continuousDriving', at: now - 1440 - 120, over: 12 },
+      { type: 'activity', activity: 'rest', start: now - 1440 + 60, end: now - 300 },
+    ],
+    speed: 83,
+    distance: 1284.6,
+    truck: 'Volvo FH16',
+    gameTime: now,
+    card: settings.tacho.card,
+    profile: {
+      name: 'De Leren Uil',
+      company: 'Kronos vervoer',
+      cardNumber: 'NL04718552093316',
+      distance: 4171,
+      deliveries: 12,
+      experience: 219,
+      money: 138121,
+    },
   }
 }
 

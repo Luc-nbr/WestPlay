@@ -12,11 +12,12 @@ export interface Tone {
 type Band = keyof Tone
 
 /** Each handle: where it sits on the curve (Hz), its range, and how a dB of the graph becomes its value. */
+// Each band up to 20 dB either way; the bass boosted by pulling the bass up (owner 2026-11-17: no separate
+// boost handle). A boost kept from before still sounds and is drawn, until the curve is moved.
 const HANDLES: { band: Band; at: number; min: number; max: number; step: number }[] = [
-  { band: 'boost', at: 45, min: 0, max: 100, step: 5 },
-  { band: 'bass', at: 100, min: -6, max: 6, step: 1 },
-  { band: 'mid', at: 1000, min: -6, max: 6, step: 1 },
-  { band: 'treble', at: 8000, min: -6, max: 6, step: 1 },
+  { band: 'bass', at: 100, min: -20, max: 20, step: 1 },
+  { band: 'mid', at: 1000, min: -20, max: 20, step: 1 },
+  { band: 'treble', at: 8000, min: -20, max: 20, step: 1 },
 ]
 
 const WIDTH = 340
@@ -25,7 +26,7 @@ const PAD = { left: 30, right: 10, top: 22, bottom: 26 }
 const LOW = 20
 const HIGH = 20000
 /** The graph's dB, either way. */
-const RANGE = 27
+const RANGE = 24
 const RATE = 48000
 
 /** A band's dB as the graph draws it: the boost's 0 to 100 is 0 to 12 dB. */
@@ -96,7 +97,7 @@ const x = (f: number) =>
 const y = (db: number) => PAD.top + ((RANGE - db) / (2 * RANGE)) * (HEIGHT - PAD.top - PAD.bottom)
 
 /**
- * The music's tone as a real equalizer's curve, in Dashly's look: its handles dragged up or down (bass, mid, treble,
+ * The music's tone as a real equalizer's curve, in Euro-Hub's look: its handles dragged up or down (bass, mid, treble,
  * and the bass boost under them), the curve the sound chain makes drawn live as they move. `change` as it's dragged
  * (the sound follows), `commit` once let go.
  */
@@ -107,7 +108,7 @@ export function EqCurve({
   commit,
 }: {
   tone: Tone
-  names: Record<Band, string>
+  names: Record<Exclude<Band, 'boost'>, string>
   change(tone: Tone): void
   commit(tone: Tone): void
 }) {
@@ -212,7 +213,7 @@ export function EqCurve({
             <circle className="dashly-eq-halo" cx={cx} cy={cy} r={16} />
             <circle className="dashly-eq-dot" cx={cx} cy={cy} r={7} />
             <text className="dashly-eq-name" x={cx} y={cy - 16 < PAD.top + 8 ? cy + 24 : cy - 16} textAnchor="middle">
-              {names[handle.band]}
+              {names[handle.band as Exclude<Band, 'boost'>]}
             </text>
           </g>
         )

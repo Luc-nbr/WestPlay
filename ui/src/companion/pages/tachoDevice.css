@@ -1,0 +1,623 @@
+/* The tachograph as a real unit: a 1-DIN front in matte black plastic, a two-line dot-matrix display, four keys,
+   two card slots with their eject buttons, a thermal printer. No maker's name or look. */
+
+.td-wrap {
+  position: relative;
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+.td-unit {
+  position: relative;
+  z-index: 3;
+}
+
+.td-face {
+  position: relative;
+  aspect-ratio: 3.55;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.07), transparent 18%),
+    radial-gradient(140% 120% at 30% 0%, #2a2d33, #16181c 70%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px rgb(0 0 0 / 0.6),
+    inset 0 -3px 6px rgb(0 0 0 / 0.5),
+    0 18px 40px rgb(0 0 0 / 0.55),
+    0 2px 0 #0b0c0e;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  container-type: inline-size;
+}
+
+/* A raised rim, as a moulded bezel. */
+.td-face::before {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  inset-inline: 2.2%;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.04),
+    0 0 0 1px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+
+.td-screw {
+  position: absolute;
+  top: 46%;
+  width: 1.3cqw;
+  height: 1.3cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #3a3d43, #0a0b0d 70%);
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.8);
+}
+
+.td-screw-l {
+  left: 0.9%;
+}
+
+.td-screw-r {
+  right: 0.9%;
+}
+
+/* ---------- The display ---------- */
+
+.td-lcd {
+  position: absolute;
+  left: 6.5%;
+  top: 11%;
+  width: 46%;
+  height: 37%;
+  padding: 1.2cqw 1.6cqw;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #050607, #0b0d10);
+  box-shadow:
+    inset 0 0 0 1px #000,
+    inset 0 3px 8px rgb(0 0 0 / 0.9),
+    0 0 0 0.45cqw #0e1013,
+    0 0 0 0.6cqw rgb(255 255 255 / 0.05);
+  overflow: hidden;
+}
+
+/* The glass's sheen. */
+.td-lcd::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.09), transparent 40%);
+  pointer-events: none;
+}
+
+/* The characters' dots: everything on the display through a grid of round pixels. */
+.td-dots {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+  color: #eef2f6;
+  text-shadow: 0 0 6px rgb(220 235 255 / 0.35);
+  mask-image: radial-gradient(circle, #000 58%, transparent 66%);
+  mask-size: 0.42cqw 0.42cqw;
+}
+
+.td-line {
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  height: 50%;
+  font-size: 4.3cqw;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.td-line b {
+  font-weight: 800;
+}
+
+.td-line span {
+  font-weight: 700;
+}
+
+.td-line .td-right {
+  margin-left: auto;
+}
+
+.td-line .td-small {
+  font-size: 2.6cqw;
+  white-space: normal;
+}
+
+.td-line .tacho-icon {
+  width: 4.2cqw;
+  height: 4.2cqw;
+  stroke-width: 2.6;
+}
+
+/* ---------- The printer ---------- */
+
+.td-printer-key {
+  position: absolute;
+  left: 55.5%;
+  top: 12%;
+  width: 2.6%;
+  height: 31%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #202328, #2d3036 50%, #1b1d21);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.7),
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.td-printer {
+  position: absolute;
+  left: 60%;
+  top: 9%;
+  width: 34.5%;
+  height: 55%;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #1e2125, #131518);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 2px 4px rgb(0 0 0 / 0.5);
+}
+
+/* The paper's slit along the door's top. */
+.td-printer i {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 9%;
+  height: 0.5cqw;
+  border-radius: 2px;
+  background: #050506;
+}
+
+.td-printer[data-printing] i {
+  background: #f2f2ef;
+  box-shadow: 0 0 6px rgb(255 255 255 / 0.4);
+}
+
+/* ---------- The keys ---------- */
+
+.td-buttons {
+  position: absolute;
+  left: 6.5%;
+  top: 57%;
+  width: 46%;
+  height: 11%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.4cqw;
+}
+
+.td-buttons button,
+.td-eject {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  color: #cfd3d8;
+  font:
+    700 2.2cqw ui-monospace,
+    Consolas,
+    monospace;
+  background: linear-gradient(180deg, #34383f, #22252a);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    inset 0 0 0 1px rgb(0 0 0 / 0.5),
+    0 2px 0 #0b0c0e,
+    0 3px 6px rgb(0 0 0 / 0.45);
+  cursor: pointer;
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease;
+}
+
+.td-buttons button:active,
+.td-eject:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(0 0 0 / 0.5),
+    0 0 0 #0b0c0e;
+}
+
+/* ---------- The card slots ---------- */
+
+.td-slot {
+  position: absolute;
+  top: 76%;
+  height: 10%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #121417, #1d2024);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.6),
+    0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.td-slot i {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 42%;
+  height: 0.55cqw;
+  border-radius: 1px;
+  background: #030304;
+  box-shadow: inset 0 1px 2px #000;
+}
+
+.td-slot-1 {
+  left: 8.5%;
+  width: 33%;
+}
+
+.td-slot-2 {
+  left: 57%;
+  width: 37%;
+}
+
+.td-slot-1[data-over] {
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.6),
+    0 0 0 2px var(--blue),
+    0 0 18px var(--blue-glow);
+}
+
+/* The card's end, showing in the slot. */
+.td-slot-1[data-in] i {
+  height: 0.9cqw;
+  background: linear-gradient(90deg, #d9e2f2, #f4d9e6);
+  box-shadow: 0 0 4px rgb(255 255 255 / 0.25);
+}
+
+.td-eject {
+  position: absolute;
+  top: 74%;
+  width: 5.2%;
+  height: 14%;
+}
+
+.td-eject .tacho-icon {
+  width: 2.6cqw;
+  height: 2.6cqw;
+  fill: #cfd3d8;
+  stroke: none;
+}
+
+.td-eject-1 {
+  left: 44%;
+}
+
+.td-eject-2 {
+  left: 50%;
+}
+
+/* ---------- The receipt ---------- */
+
+.td-paper-out {
+  position: absolute;
+  top: 13%;
+  left: 62%;
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.td-paper-out[data-paper='58'] {
+  left: 65%;
+  width: 24%;
+}
+
+.td-paper-out .td-receipt {
+  max-height: 2000px;
+  transform-origin: top;
+  animation: td-print 2600ms linear;
+  pointer-events: auto;
+}
+
+@keyframes td-print {
+  from {
+    max-height: 0;
+  }
+}
+
+.td-receipt {
+  width: 100%;
+  padding: 10px 9px 14px;
+  overflow: hidden;
+  color: #1c1c1c;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0.12), transparent 14px),
+    linear-gradient(90deg, #ecebe6, #fbfbf8 20%, #fbfbf8 80%, #e9e8e2);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.5);
+  font:
+    500 9.5px/1.35 ui-monospace,
+    Consolas,
+    monospace;
+  /* The torn edge at the bottom. */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    92% 99%,
+    84% 100%,
+    76% 99%,
+    68% 100%,
+    60% 99%,
+    52% 100%,
+    44% 99%,
+    36% 100%,
+    28% 99%,
+    20% 100%,
+    12% 99%,
+    4% 100%,
+    0 99%
+  );
+}
+
+.td-receipt p {
+  margin: 0;
+}
+
+.td-receipt hr {
+  margin: 5px 0;
+  border: 0;
+  border-top: 1px dashed #555;
+}
+
+.td-r-title {
+  font-weight: 800;
+}
+
+.td-r-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.td-r-text[data-strong] {
+  font-weight: 800;
+}
+
+.td-r-activity {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 5px;
+}
+
+.td-receipt .tacho-icon {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2.4;
+}
+
+.td-r-signature p {
+  margin-top: 2px;
+}
+
+.td-r-signature i {
+  display: block;
+  height: 26px;
+  border-bottom: 1px dotted #333;
+}
+
+.td-paper-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  pointer-events: auto;
+}
+
+.td-action {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 99px;
+  color: #fff;
+  background: var(--blue);
+  box-shadow: 0 4px 14px var(--blue-glow);
+  font:
+    600 12px 'Instrument Sans Variable',
+    sans-serif;
+  cursor: pointer;
+}
+
+.td-action[data-plain] {
+  background: var(--fill-strong);
+  box-shadow: none;
+}
+
+/* ---------- The card, in its tray under the unit ---------- */
+
+.td-tray {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 92px;
+  padding: 14px 4px 4px 8.5%;
+}
+
+.td-card {
+  position: relative;
+  z-index: 5;
+  width: 128px;
+  aspect-ratio: 85.6 / 54;
+  flex: none;
+  border-radius: 6px;
+  cursor: grab;
+  touch-action: none;
+  transition:
+    transform 260ms var(--spring),
+    opacity 300ms ease;
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 0.45),
+    0 1px 0 rgb(255 255 255 / 0.3) inset;
+}
+
+.td-card[data-state='dragging'] {
+  cursor: grabbing;
+  transition: none;
+  box-shadow: 0 18px 34px rgb(0 0 0 / 0.55);
+}
+
+.td-card[data-state='going-in'] {
+  transition:
+    transform 500ms cubic-bezier(0.5, 0, 0.75, 0),
+    opacity 500ms ease-in;
+  opacity: 0;
+}
+
+.td-card[data-state='coming-out'] {
+  animation: td-card-out 560ms var(--spring);
+}
+
+@keyframes td-card-out {
+  from {
+    transform: translateY(-70px) rotateX(70deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.td-card-slotted {
+  width: 128px;
+  aspect-ratio: 85.6 / 54;
+  flex: none;
+  border-radius: 6px;
+  border: 1.5px dashed rgb(255 255 255 / 0.14);
+}
+
+.td-card-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  color: #1d2a4a;
+  background:
+    radial-gradient(90% 70% at 100% 100%, rgb(232 150 190 / 0.55), transparent 70%),
+    radial-gradient(90% 80% at 0% 0%, rgb(170 200 245 / 0.7), transparent 70%),
+    linear-gradient(135deg, #f4f6fb, #f6e9f0);
+  font-family: 'Instrument Sans Variable', sans-serif;
+}
+
+.td-card-top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 7px 0;
+}
+
+.td-card-top b {
+  font-size: 7.5px;
+  letter-spacing: 0.06em;
+}
+
+.td-card-country {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: #ffd54a;
+  background: #1f3a93;
+  font-size: 6.5px;
+  font-weight: 800;
+}
+
+.td-card-chip {
+  position: absolute;
+  left: 9px;
+  top: 30px;
+  width: 19px;
+  height: 15px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #e8cf87, #b8964a 60%, #e5cd8a);
+  box-shadow: inset 0 0 0 1px rgb(120 90 30 / 0.5);
+}
+
+.td-card-lines {
+  position: absolute;
+  left: 34px;
+  right: 32px;
+  top: 27px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 6.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.td-card-photo {
+  position: absolute;
+  right: 7px;
+  top: 24px;
+  width: 22px;
+  height: 27px;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle at 50% 38%, #8a96ad 26%, transparent 27%),
+    radial-gradient(ellipse at 50% 100%, #8a96ad 45%, transparent 46%), #d8deea;
+}
+
+.td-hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.td-hint span {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+/* ---------- On paper: the receipt alone, as the player's (thermal) printer prints it ---------- */
+
+.td-receipt-print {
+  display: none;
+  padding: 2mm 3mm 6mm;
+  color: #000;
+  background: #fff;
+  box-shadow: none;
+  clip-path: none;
+  font-size: 8.5pt;
+}
+
+.td-receipt-print .tacho-icon {
+  width: 9pt;
+  height: 9pt;
+  fill: none;
+  stroke: #000;
+}
+
+/* Measured before printing (its height is the paper's length), out of sight. */
+.td-receipt-print.td-measure {
+  display: block;
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  visibility: hidden;
+}
+
+@media print {
+  html.td-printing #root {
+    display: none !important;
+  }
+
+  html.td-printing,
+  html.td-printing body {
+    background: #fff !important;
+  }
+
+  html.td-printing .td-receipt-print {
+    display: block;
+    break-inside: avoid;
+  }
+}

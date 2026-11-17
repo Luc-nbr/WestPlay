@@ -1,5 +1,5 @@
-# Builds a Dashly release for the fork (Luc-nbr/WestPlay): the game plugin, probe and map builder, then the signed
-# installer and the updater's latest.json, which Dashly's installs read from the fork's latest release.
+# Builds a Euro-Hub release for the fork (Luc-nbr/WestPlay): the game plugin, probe and map builder, then the signed
+# installer and the updater's latest.json, which Euro-Hub's installs read from the fork's latest release.
 #
 #   powershell -ExecutionPolicy Bypass -File tools\release-dashly.ps1 -Version 2.5.0 -Notes "What changed"
 #   ... then, to publish it on GitHub (your own step):
@@ -15,12 +15,12 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $repo = 'Luc-nbr/WestPlay'
 $out = Join-Path $root "target\release\bundle\nsis"
-$setup = "Dashly_${Version}_x64-setup.exe"
+$setup = "Euro-Hub_${Version}_x64-setup.exe"
 
 if ($Publish) {
     $files = @((Join-Path $out $setup), (Join-Path $out 'latest.json'))
     foreach ($file in $files) { if (-not (Test-Path $file)) { throw "Build $Version first: $file is missing" } }
-    gh release create "v$Version" @files --repo $repo --title "Dashly $Version" --notes $Notes
+    gh release create "v$Version" @files --repo $repo --title "Euro-Hub $Version" --notes $Notes
     exit $LASTEXITCODE
 }
 

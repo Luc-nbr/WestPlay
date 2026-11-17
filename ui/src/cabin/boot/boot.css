@@ -126,7 +126,7 @@
   }
 }
 
-/* Dashly's intro: on the logo's navy, its mark glowing blue, its wordmark as the logo writes it. */
+/* Euro-Hub's intro: on the logo's navy, its mark glowing blue, its wordmark as the logo writes it. */
 .boot:has(.boot-intro) {
   background: radial-gradient(70% 70% at 50% 50%, #0d2a5c, #0a1f44 45%, #050d1f);
 }
@@ -140,7 +140,7 @@
   letter-spacing: -0.02em;
 }
 
-/* "powered by MOF Technologies": under the pair, rising in once Dashly's name is out, leaving with it. */
+/* "powered by MOF Technologies": under the pair, rising in once Euro-Hub's name is out, leaving with it. */
 .boot-intro {
   position: relative;
 }

@@ -102,7 +102,7 @@ pub const APPLE_MUSIC: Site = Site {
 /// it's in the app (`discord_sign_in.js`: Discord changes its address without loading a page).
 pub const DISCORD: Site = Site {
     sign_in: "https://discord.com/login",
-    title: "Sign in to Discord - Dashly",
+    title: "Sign in to Discord - Euro-Hub",
     home: "https://discord.com/channels/",
     not_yet: None,
     page_says: Some(include_str!("discord_sign_in.js")),

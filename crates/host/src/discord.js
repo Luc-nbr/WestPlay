@@ -1,5 +1,5 @@
-// Dashly: Discord's pages in Safari (safari.rs, before safari.js, which takes `window.chrome.webview` from the
-// page): Discord in Dashly's look, made for a car's screen, and its call told to the cab (whether there is one, and
+// Euro-Hub: Discord's pages in Safari (safari.rs, before safari.js, which takes `window.chrome.webview` from the
+// page): Discord in Euro-Hub's look, made for a car's screen, and its call told to the cab (whether there is one, and
 // whether the microphone is muted and the sound deafened) for the cab's own call bar. What it looks like only: the
 // account, the messages and the call are Discord's own, untouched.
 ;(() => {
@@ -7,7 +7,7 @@
   const host = window.chrome?.webview
   if (!host) return
 
-  // ---------- Dashly's look ----------
+  // ---------- Euro-Hub's look ----------
   const SKIN = `
     :root, .theme-dark, .theme-darker, .theme-midnight, .theme-light {
       --background-primary: #0e1a33 !important;
@@ -37,7 +37,7 @@
     [class*="channel_"] { margin-block: 2px !important; }
     [class*="name_"], [class*="channelName"] { font-size: 17px !important; }
     [class*="messageContent"] { font-size: 18px !important; line-height: 1.45 !important; }
-    /* Rounded, as Dashly's cards; no scrollbars (the screen is dragged). */
+    /* Rounded, as Euro-Hub's cards; no scrollbars (the screen is dragged). */
     [class*="chatContent"] { border-top-left-radius: 18px !important; }
     [class*="guilds_"] [class*="listItem"] [class*="wrapper_"] { border-radius: 16px !important; }
     ::-webkit-scrollbar { width: 0 !important; height: 0 !important; }

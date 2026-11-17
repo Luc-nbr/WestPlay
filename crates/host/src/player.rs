@@ -40,6 +40,9 @@ pub struct Player {
     /// The profile's units (Options › Regional settings): miles and mph (`true`), or kilometres and km/h;
     /// `None` when its options don't say.
     pub mph: Option<bool>,
+    /// The profile and its save, for the tachograph's driver card (owner 2026-11-17: the card from the local
+    /// profile, World of Trucks having no way in): `None` when its profile couldn't be read.
+    pub profile: Option<crate::tacho::Profile>,
 }
 
 /// The speakers of the parts of the truck the SDK names (`None`: not found in the save, or no part with any).
@@ -112,10 +115,12 @@ impl PlayerWatch {
                 {
                     match read_units(&path) {
                         Ok(units) => {
-                            let mods = save::profile_of(&path)
-                                .and_then(|profile| read_units(&profile).ok())
-                                .map(|units| save::active_mods(&units))
-                                .unwrap_or_default();
+                            let profile_units = save::profile_of(&path).and_then(|profile| read_units(&profile).ok());
+                            let mods = profile_units.as_deref().map(save::active_mods).unwrap_or_default();
+                            let profile = profile_units.as_deref().and_then(|profile| {
+                                let id = save::profile_of(&path)?.parent()?.file_name()?.to_string_lossy().into_owned();
+                                crate::tacho::Profile::read(&id, profile, &units)
+                            });
                             let mod_dir = documents.as_deref().map(|dir| dir.join("mod")).unwrap_or_default();
                             let found: Vec<_> =
                                 mods.iter().map(|listed| find_mod(kind, listed, game.as_ref(), &mod_dir)).collect();
@@ -131,6 +136,7 @@ impl PlayerWatch {
                                 language: documents.as_deref().and_then(game_language),
                                 time_zones: config.as_deref().is_some_and(time_zones),
                                 mph: config.as_deref().and_then(mph),
+                                profile,
                             };
                             if sender.send(player).is_err() {
                                 return;

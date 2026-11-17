@@ -48,6 +48,64 @@ pub struct Settings {
     /// game's, by its code (`tr_tr`), or `None`: the game's own (owner 2026-11-03).
     #[serde(deserialize_with = "lenient")]
     pub language: Option<LanguageCode>,
+    /// The tachograph (`tacho`, the companion's Tachograph page).
+    #[serde(deserialize_with = "lenient")]
+    pub tacho: TachoSettings,
+    /// The touring-coach company (`touring`, the companion's Touringcar page).
+    #[serde(deserialize_with = "lenient")]
+    pub touring: TouringSettings,
+}
+
+/// The touring-coach company: on, its name (the player's own), its home town (a map city id; empty: the first Dutch
+/// town the map has), the coach's seats, the game's GPS set to each next stop, announcements asked for.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct TouringSettings {
+    pub enabled: bool,
+    pub company: String,
+    pub home: String,
+    pub seats: u32,
+    pub navigate: bool,
+    pub announcements: bool,
+}
+
+impl Default for TouringSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            company: String::new(),
+            home: String::new(),
+            seats: 50,
+            navigate: true,
+            announcements: true,
+        }
+    }
+}
+
+/// The tachograph: on, the clock it runs on, its warnings on the cab's screen (and the iPad), the driver's card in
+/// its slot or not and whose it is, and the receipt printer's paper (58 or 80 mm).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct TachoSettings {
+    pub enabled: bool,
+    pub clock: crate::tacho::Clock,
+    pub cab_warnings: bool,
+    pub card: bool,
+    pub driver: String,
+    pub paper: u32,
+}
+
+impl Default for TachoSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            clock: crate::tacho::Clock::Game,
+            cab_warnings: true,
+            card: false,
+            driver: String::new(),
+            paper: 80,
+        }
+    }
 }
 
 /// One of the game's language codes, as its `config.cfg` writes them (`tr_tr`, `pt_br`): two letters, `_`, two.
@@ -643,6 +701,15 @@ mod tests {
             controller: Default::default(),
             announce: Default::default(),
             language: LanguageCode::new("pt_br"),
+            tacho: TachoSettings {
+                enabled: false,
+                clock: crate::tacho::Clock::Real,
+                cab_warnings: false,
+                card: true,
+                driver: "J. de Vries".into(),
+                paper: 58,
+            },
+            touring: TouringSettings { company: "Reizen de Vries".into(), seats: 61, ..Default::default() },
         };
         let json = to_json(&settings);
         assert!(json.contains("\"coach\": \"passengers\""), "{json}");

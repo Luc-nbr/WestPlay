@@ -146,6 +146,23 @@ fn toggle_fullscreen(window: WebviewWindow) -> bool {
     full
 }
 
+/// The page is laid out for the window's 900 × 600 and reaches across any width: larger (maximised, full screen,
+/// dragged bigger), it's zoomed a little, as if the window were 1440 × 900, so it grows with the screen without
+/// its words getting big (owner 2026-11-17: filling the screen from 900 × 600 was "teveel geschaald").
+fn fit_zoom(window: &WebviewWindow, size: tauri::PhysicalSize<u32>) {
+    if size.width == 0 || size.height == 0 {
+        return; // minimised
+    }
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let size = size.to_logical::<f64>(scale);
+    let zoom = (size.width / ZOOMED_WIDTH).min(size.height / ZOOMED_HEIGHT).max(1.0);
+    let _ = window.set_zoom(zoom);
+}
+
+/// The window size whose page is shown unzoomed; past it, the page is zoomed in step ([`fit_zoom`]).
+const ZOOMED_WIDTH: f64 = 1440.0;
+const ZOOMED_HEIGHT: f64 = 900.0;
+
 #[tauri::command]
 fn discord_sign_in(accounts: State<Accounts>) {
     accounts.0.discord.request(AccountAction::SignIn);
@@ -198,6 +215,26 @@ fn app_log_place() -> Option<String> {
 #[tauri::command]
 fn key_name(key: u32) -> Option<String> {
     westplay_host::settings::KeyCode::name(key)
+}
+
+/// The tachograph's receipt printed (the companion's Tachograph page): Windows' print dialog for this window, whose
+/// page shows only the receipt when printed (its print styles), for the player's (thermal) printer.
+#[tauri::command]
+fn print_receipt(window: WebviewWindow) -> Result<(), String> {
+    window.print().map_err(|e| e.to_string())
+}
+
+/// The tachograph's log emptied (the companion's Tachograph page): the host does it on its next tick.
+#[tauri::command]
+fn tacho_clear() {
+    westplay_host::tacho::RESET.store(true, Ordering::Release);
+}
+
+/// What the companion's Touringcar page asks of the company (a trip taken, called off, a point recorded…): the
+/// host does it on its next tick.
+#[tauri::command]
+fn touring_action(action: westplay_host::touring::Action) {
+    westplay_host::touring::request(action);
 }
 
 #[tauri::command]
@@ -258,6 +295,9 @@ fn main() {
             discord_sign_out,
             discord_check,
             announce_slot,
+            tacho_clear,
+            touring_action,
+            print_receipt,
             open_social,
             app_log_place,
             customize::customize_list,
@@ -286,6 +326,12 @@ fn main() {
             westplay_host::startup::mark("app: window set up");
             // A page that never says it's ready (it failed to load) still shows, rather than nothing at all.
             if let Some(window) = app.get_webview_window("main") {
+                let zoomed = window.clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Resized(size) = event {
+                        fit_zoom(&zoomed, *size);
+                    }
+                });
                 std::thread::spawn(move || {
                     std::thread::sleep(SHOW_ANYWAY);
                     if !window.is_visible().unwrap_or(true) {
@@ -453,8 +499,8 @@ fn start_host(
                 Ended::Failed(error) => error,
             };
             // In the log too: shown only, a player's said nothing of it (2026-11-11).
-            westplay_host::log!("Dashly engine stopped: {error}");
-            let status = Status { error: Some(format!("Dashly engine stopped: {error}")), ..Default::default() };
+            westplay_host::log!("Euro-Hub engine stopped: {error}");
+            let status = Status { error: Some(format!("Euro-Hub engine stopped: {error}")), ..Default::default() };
             let _ = events.emit("host-status", &status);
             return;
         }

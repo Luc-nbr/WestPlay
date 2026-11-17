@@ -156,6 +156,11 @@ export type HostMessage =
   | { type: 'mapBlock'; hvt: boolean; language: string | null }
   /** Whether the player's profile has the game's time zones on (its clock the time where the truck is). */
   | { type: 'timeZones'; on: boolean }
+  /** The tachograph's warning for the cab's screen (the companion's Tachograph): a limit near or reached, the
+   * daily rest due, a rule just broken; `ping` new with each warning given (15 and 5 minutes ahead). */
+  | { type: 'tacho'; alert: TachoAlert | null; violation: string | null; ping: number }
+  /** The touring-coach company's driver's terminal (the companion's Touringcar): the trip driven, `null` without one. */
+  | { type: 'touring'; company: string; now: number | null; trip: TouringTerminal | null }
   /** The player's profile's units (its `g_mph`): miles and mph (`true`), or kilometres and km/h; `null` when its
    * options don't say. */
   | { type: 'units'; mph: boolean | null }
@@ -300,7 +305,7 @@ export interface Equalizer {
 export const EQUALIZER_BANDS = ['bass', 'mid', 'treble'] as const satisfies readonly (keyof Equalizer)[]
 
 /** How far each band goes, dB (the host's `Equalizer::MOST`). */
-export const EQUALIZER_MOST = 6
+export const EQUALIZER_MOST = 20
 
 export const FLAT: Equalizer = { bass: 0, mid: 0, treble: 0 }
 
@@ -355,6 +360,8 @@ export type PageMessage =
   /** The text field selected, a number that changes with every selection (0: none), for the player's own
    * keyboard to type into while the truck stands still. */
   | { type: 'typing'; selection: number }
+  /** The driver's terminal asks the touring company to skip the next stop (it can't be reached). */
+  | { type: 'touring'; action: 'skip' }
   /** A command for YouTube's player, or a question for YouTube (answered with `youtubeAnswer`). */
   | { type: 'youtube'; command: YouTubeCommand }
   /** A command for Spotify's web player (`westplay_host::spotify::Command`): `show` places it, in the frame's
@@ -1187,7 +1194,7 @@ export const IS_DEMO = typeof location !== 'undefined' && new URLSearchParams(lo
 
 /** Whether the page runs inside the WestPlay host (and not in a plain browser preview, nor as the demo). */
 export function isInHost(): boolean {
-  // On the iPad, the page's own head says so before any script runs (remote.rs `ipad_page`): its connection to Dashly
+  // On the iPad, the page's own head says so before any script runs (remote.rs `ipad_page`): its connection to Euro-Hub
   // (ipad.ts) stands in for WebView2's only once its module has run, and a module that asks as it loads (a shared
   // chunk, run first) must hear yes all the same.
   const ipad = (window as unknown as { westplayIpad?: boolean }).westplayIpad === true
@@ -1217,4 +1224,40 @@ export function postToHost(message: PageMessage): void {
 /** A truck with no identity (the SDK reports empty strings when there is no truck). */
 export function hasTruck(truck: TruckInfo | null): truck is TruckInfo {
   return truck !== null && truck.brandId !== ''
+}
+
+/** A tachograph limit near (`soon`, `minutes` away) or reached (`over`): the break, the day's, week's or two
+ * weeks' driving, or the daily rest due. */
+export interface TachoAlert {
+  tone: 'soon' | 'over'
+  limit: 'break' | 'day' | 'week' | 'fortnight' | 'rest' | 'card'
+  minutes: number
+}
+
+/** A stop of a touring-coach trip, by what it is. */
+export type TouringStopKind = 'depot' | 'pickup' | 'coffee' | 'meal' | 'destination' | 'hotel' | 'excursion' | 'dropoff'
+
+/** The touring-coach trip as the cab's driver's terminal shows it (`westplay_host::touring`). */
+export interface TouringTerminal {
+  kind: 'dayTrip' | 'tour' | 'school' | 'charter'
+  destination: string
+  days: number
+  day: number
+  phase: 'toFirstPickup' | 'boarding' | 'outbound' | 'stay' | 'return' | 'unloading' | 'toDepot' | 'done'
+  /** The next stop: when planned (game minutes), game km and minutes away, minutes late (negative: early). */
+  next: {
+    kind: TouringStopKind
+    name: string
+    at: number
+    distance: number | null
+    eta: number | null
+    late: number | null
+  } | null
+  stopsLeft: number
+  onBoard: number
+  toCollect: number
+  seats: number
+  mood: number
+  /** The announcement Dashly asks the driver to make over the PA. */
+  prompt: { kind: string; place: string; at: number | null } | null
 }
