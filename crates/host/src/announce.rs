@@ -250,9 +250,20 @@ impl Announcer {
             log!("announcements: the microphone {}", if settings.on { "on" } else { "off" });
         }
         if *current != *settings {
+            // The engine started again only for what it runs on (its driver, devices, buffer): the sound's sliders
+            // (volume, quality, distortion) move it live, never cut off.
+            let engine = |s: &AnnounceSettings| {
+                (s.driver, s.input.clone(), s.output.clone(), s.asio_driver.clone(), s.asio_input, s.asio_output)
+            };
+            let restart = engine(&current) != engine(settings)
+                || current.buffer != settings.buffer
+                || current.stream_copy != settings.stream_copy
+                || current.stream_output != settings.stream_output;
             *current = settings.clone();
-            self.shared.generation.fetch_add(1, Ordering::AcqRel);
-            self.shared.status().error = None;
+            if restart {
+                self.shared.generation.fetch_add(1, Ordering::AcqRel);
+                self.shared.status().error = None;
+            }
         }
         self.shared.key.store(settings.ptt_key.map_or(0, |key| key.virtual_key()), Ordering::Release);
         self.shared.wheel_bound.store(wheel_bound, Ordering::Release);
@@ -399,6 +410,7 @@ impl Processor {
         let settings = self.shared.settings.lock().unwrap_or_else(|e| e.into_inner()).clone();
         self.voice.gain = settings.volume.min(100) as f32 / 100.0;
         self.voice.set_quality(settings.quality);
+        self.voice.extra_drive = settings.drive.min(100) as f32 / 100.0;
         self.voice.set_taps(&self.shared.taps.lock().unwrap_or_else(|e| e.into_inner()));
         if self.copying {
             self.copy_voice.gain = self.voice.gain;
@@ -1228,6 +1240,8 @@ struct Voice {
     bass_out: [Biquad; 2],
     bass_drive: f32,
     bass_mix: f32,
+    /// The player's own distortion on top (0 to 1).
+    extra_drive: f32,
     /// The voice's last 150 ms, for the further units.
     history: Vec<f32>,
     written: usize,
@@ -1250,6 +1264,7 @@ impl Voice {
             bass_out: [Biquad::new(rate, 1500.0, false), Biquad::new(rate, 45.0, true)],
             bass_drive: 1.0,
             bass_mix: 0.0,
+            extra_drive: 0.0,
             history: vec![0.0; (rate * 0.15) as usize + 1],
             written: 0,
             taps: Vec::new(),
@@ -1328,7 +1343,8 @@ impl Voice {
             v = filter.step(v);
         }
         // A PA's units, driven as hard as they're worn; an old one's hiss, and now and then its crackle.
-        let mut v = (v * self.drive).tanh() / self.drive.tanh().max(0.5);
+        let drive = self.drive * (1.0 + 6.0 * self.extra_drive);
+        let mut v = (v * drive).tanh() / drive.tanh().max(0.5);
         // Its bass: clipped unevenly (the cone hitting its stops), the buzz above it kept.
         if self.bass_mix > 0.0 {
             let bass = (self.bass_in.step(x) * self.bass_drive).clamp(-0.35, 0.22);

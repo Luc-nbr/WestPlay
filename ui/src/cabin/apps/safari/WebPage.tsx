@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { isInHost } from '../../../shared/host'
+import { IS_IPAD } from '../../../shared/ipad'
 import { whenTransitionEnds } from '../../state/launch'
 import { useLook } from '../../state/hooks'
 import { useCabin } from '../../state/store'
@@ -123,7 +124,8 @@ export function WebPage({ tab, url }: { tab: number; url: string }) {
         tab,
         url: address.current,
         ...page,
-        zoom: Math.round(cabZoom * PAGE_ZOOM * pageZoom.current * 1000) / 1000,
+        // On the iPad, its page laid out as on the truck's screen, drawn at the iPad's two pixels a point: sharp.
+        zoom: Math.round(cabZoom * PAGE_ZOOM * pageZoom.current * (IS_IPAD ? scale : 1) * 1000) / 1000,
         covers: Object.values(usePageHole.getState().covers).map(toFrame),
         dark: darkNow.current,
         radius: Math.round(hole.radius * scale * 100) / 100,

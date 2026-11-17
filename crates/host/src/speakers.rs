@@ -1328,6 +1328,12 @@ pub struct Equalizer {
     /// worn-out old units (cab_sound.js). Not the curve's: the companion's setting (`SoundSettings::wear`).
     #[serde(skip_serializing_if = "is_new")]
     pub wear: u8,
+    /// A bass boost under the bass band (0 to 100: up to 12 dB at 70 Hz), and a distortion on top (0 to 100): the
+    /// companion's Audio › Sound (`SoundSettings`), like the wear.
+    #[serde(skip_serializing_if = "is_new")]
+    pub boost: u8,
+    #[serde(skip_serializing_if = "is_new")]
+    pub drive: u8,
 }
 
 fn is_new(wear: &u8) -> bool {
@@ -1341,7 +1347,14 @@ impl Equalizer {
     /// Each band within [`Equalizer::MOST`] either way.
     pub fn clamped(self) -> Self {
         let clamp = |db: i8| db.clamp(-Self::MOST, Self::MOST);
-        Self { bass: clamp(self.bass), mid: clamp(self.mid), treble: clamp(self.treble), wear: self.wear.min(100) }
+        Self {
+            bass: clamp(self.bass),
+            mid: clamp(self.mid),
+            treble: clamp(self.treble),
+            wear: self.wear.min(100),
+            boost: self.boost.min(100),
+            drive: self.drive.min(100),
+        }
     }
 }
 
@@ -1576,8 +1589,8 @@ mod tests {
 
     #[test]
     fn keeps_the_tone_within_a_car_stereos_range() {
-        let wild = Equalizer { bass: -40, mid: 3, treble: 100, wear: 0 };
-        assert_eq!(wild.clamped(), Equalizer { bass: -6, mid: 3, treble: 6, wear: 0 });
+        let wild = Equalizer { bass: -40, mid: 3, treble: 100, wear: 0, boost: 0, drive: 0 };
+        assert_eq!(wild.clamped(), Equalizer { bass: -6, mid: 3, treble: 6, wear: 0, boost: 0, drive: 0 });
         assert_eq!(Equalizer::default().clamped(), Equalizer::default());
     }
 

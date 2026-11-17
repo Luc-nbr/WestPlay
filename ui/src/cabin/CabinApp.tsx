@@ -23,7 +23,7 @@ import { showBrightness, showVolume } from './shell/volumeShown'
 import { type Route, routeKey } from './state/navigation'
 import { nextPhaseAt, type PowerPhase } from './state/power'
 import { meterFrames } from './state/frameMeter'
-import { connectHost, useCabin, useLive } from './state/store'
+import { connectHost, go, useCabin, useLive } from './state/store'
 import { useText } from './state/text'
 import { followTimeZone } from './state/timeZone'
 
@@ -41,6 +41,10 @@ export function CabinApp() {
   const route = useCabin((state) => state.navigation.route)
   const phase = useCabin((state) => state.power.phase)
   useEffect(() => connectHost(), [])
+  // The iPad opens on the Dashboard (the map, the route, the music, the destination), as a car's head unit does.
+  useEffect(() => {
+    if (IS_IPAD) go({ type: 'showDashboard' })
+  }, [])
   // YouTube, Spotify, Apple Music, YouTube Music and Player pause with the game (its menu, tabbing out) and play
   // on after.
   useEffect(() => pauseYouTubeWithGame(), [])

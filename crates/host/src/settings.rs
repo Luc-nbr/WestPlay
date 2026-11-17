@@ -93,6 +93,8 @@ pub struct AnnounceSettings {
     pub volume: u32,
     /// The bus's speakers: 0 worn-out old ones (thin, crackling, hissing), 100 new.
     pub quality: u32,
+    /// The PA driven into distortion on top of its wear (0 to 100).
+    pub drive: u32,
     /// Push-to-talk on the keyboard (or the mouse): the microphone heard while it's held.
     pub ptt_key: Option<KeyCode>,
     /// Push-to-record on the keyboard (or the mouse): recorded while it's held, played through the bus the moment
@@ -121,6 +123,7 @@ impl Default for AnnounceSettings {
             on: false,
             volume: 80,
             quality: 60,
+            drive: 0,
             ptt_key: None,
             ptr_key: None,
             duck: true,
@@ -194,6 +197,11 @@ pub struct SoundSettings {
     /// How worn the speakers playing the music sound: 0 new, 100 worn-out old ones.
     #[serde(deserialize_with = "lenient")]
     pub wear: u8,
+    /// The music's bass boost and distortion (0 to 100 each).
+    #[serde(deserialize_with = "lenient")]
+    pub boost: u8,
+    #[serde(deserialize_with = "lenient")]
+    pub drive: u8,
 }
 
 /// Which of a coach's speakers play (owner 2026-11-13: a setting of the companion's, not the cab's, as real coaches
@@ -211,7 +219,7 @@ impl SoundSettings {
     /// The tone the players play: the curve if Custom is chosen, flat if Recommended.
     pub fn playing(&self) -> crate::speakers::Equalizer {
         let curve = if self.custom { self.equalizer } else { crate::speakers::Equalizer::default() };
-        crate::speakers::Equalizer { wear: self.wear, ..curve }.clamped()
+        crate::speakers::Equalizer { wear: self.wear, boost: self.boost, drive: self.drive, ..curve }.clamped()
     }
 }
 
@@ -623,10 +631,12 @@ mod tests {
             },
             graphics: GraphicsSettings { gpu: Some("10de:2702:00000000:161".into()) },
             sound: SoundSettings {
-                equalizer: crate::speakers::Equalizer { bass: -3, mid: 1, treble: 2, wear: 0 },
+                equalizer: crate::speakers::Equalizer { bass: -3, mid: 1, treble: 2, wear: 0, boost: 0, drive: 0 },
                 custom: true,
                 coach: CoachSpeakers::Passengers,
                 wear: 0,
+                boost: 0,
+                drive: 0,
             },
             map: MapSettings { buildings: false, roads: false, fast: true },
             ipad: IpadSettings { enabled: true },

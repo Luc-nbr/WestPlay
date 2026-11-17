@@ -39,6 +39,9 @@ export interface Settings {
     coach: CoachSpeakers
     /** How worn the music's speakers sound: 0 new, 100 worn-out old. */
     wear: number
+    /** The music's bass boost and distortion, 0 to 100 each. */
+    boost: number
+    drive: number
   }
   /** The cab's map: whether its buildings rise from it, and its bridges and ramps; and whether the maps are
    * prepared faster (every processor thread, up to 80% of the memory). */
@@ -58,6 +61,8 @@ export interface Settings {
     on: boolean
     volume: number
     quality: number
+    /** The PA's distortion on top of its wear, 0 to 100. */
+    drive: number
     /** Push-to-talk on the keyboard or mouse. */
     pttKey: KeyCode | null
     /** Push-to-record: recorded while held, played the moment it's let go. */
@@ -97,6 +102,7 @@ export const DEFAULT_ANNOUNCE: Settings['announce'] = {
   on: false,
   volume: 80,
   quality: 60,
+  drive: 0,
   pttKey: null,
   ptrKey: null,
   duck: true,
@@ -141,6 +147,9 @@ export type ControllerAction =
   | 'announce'
   | 'pushToTalk'
   | 'pushToRecord'
+  | 'discordMute'
+  | 'discordDeafen'
+  | 'discordLeave'
   | 'slot1'
   | 'slot2'
   | 'slot3'
@@ -158,6 +167,9 @@ export const CONTROLLER_ACTIONS: ControllerAction[] = [
   'brightnessUp',
   'pushToTalk',
   'pushToRecord',
+  'discordMute',
+  'discordDeafen',
+  'discordLeave',
   'announce',
   'slot1',
   'slot2',

@@ -288,3 +288,191 @@
   font-weight: 600;
   color: var(--text-dim);
 }
+
+/* The music's sound presets: chips of glass, the one chosen in Dashly's blue. */
+.dashly-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block: 12px;
+}
+
+.dashly-preset {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--fill-strong);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 220ms ease,
+    transform 300ms var(--spring),
+    box-shadow 220ms ease;
+}
+
+.dashly-preset:hover {
+  background: rgb(255 255 255 / 0.18);
+}
+
+.dashly-preset:active {
+  transform: scale(0.94);
+}
+
+.dashly-preset[data-chosen] {
+  background: var(--blue);
+  box-shadow: 0 0 14px var(--blue-glow);
+}
+
+/* The music's tone as an equalizer's curve (EqCurve.tsx): a dark glass panel, a glowing curve, handles to drag. */
+.dashly-eq-row {
+  display: block;
+  padding-block: 12px;
+}
+
+.dashly-eq {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  background: radial-gradient(120% 90% at 20% 0%, rgb(59 107 255 / 0.16), transparent 60%), rgb(4 10 23 / 0.7);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  touch-action: none;
+  user-select: none;
+}
+
+.dashly-eq-grid {
+  stroke: rgb(255 255 255 / 0.06);
+  stroke-width: 1;
+}
+
+.dashly-eq-zero {
+  stroke: rgb(255 255 255 / 0.22);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.dashly-eq-label {
+  fill: var(--text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashly-eq-line,
+.dashly-eq-shine {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashly-eq-shine {
+  stroke-width: 7;
+  opacity: 0.55;
+}
+
+.dashly-eq-handle {
+  cursor: ns-resize;
+}
+
+.dashly-eq-dot {
+  fill: #fff;
+  stroke: var(--blue);
+  stroke-width: 3;
+  transition: r 200ms var(--spring);
+}
+
+.dashly-eq-handle[data-band='boost'] .dashly-eq-dot {
+  stroke: #ff9f0a;
+}
+
+.dashly-eq-halo {
+  fill: rgb(59 107 255 / 0.18);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.dashly-eq-handle[data-band='boost'] .dashly-eq-halo {
+  fill: rgb(255 159 10 / 0.2);
+}
+
+.dashly-eq-handle:hover .dashly-eq-halo,
+.dashly-eq-handle[data-dragging] .dashly-eq-halo {
+  opacity: 1;
+}
+
+.dashly-eq-handle[data-dragging] .dashly-eq-dot {
+  r: 10px;
+}
+
+.dashly-eq-name {
+  fill: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.dashly-eq-values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.dashly-eq-values span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: var(--fill);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashly-eq-values b {
+  color: var(--text-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* The window full screen, or back (F11 too): a small round at the brand's end. */
+.cp-brand {
+  position: relative;
+}
+
+.dashly-fullscreen {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--fill);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.dashly-fullscreen:hover {
+  background: var(--fill-strong);
+  color: var(--text);
+}
+
+.dashly-fullscreen svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

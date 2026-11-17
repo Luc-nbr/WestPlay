@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { SafariApp } from '../safari/SafariApp'
+import { CallBar } from './CallBar'
 import { load, newTab, selectTab, useSafari } from '../safari/safari'
 
 /** Where Discord opens: its web app (sign in, servers, calls, streams). */
@@ -35,5 +36,5 @@ export function DiscordApp() {
       load(DISCORD)
     }
   }, [])
-  return <SafariApp />
+  return <SafariApp app={{ name: 'Discord', className: 'discord-app', footer: <CallBar /> }} />
 }

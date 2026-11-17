@@ -40,6 +40,8 @@ const OPENED_FROM = 2 ** 30
 export const ZOOMS = [0.5, 0.75, 0.85, 1, 1.15, 1.25, 1.5, 1.75, 2, 2.5, 3] as const
 
 interface SafariState {
+  /** Discord's call as its page says (the Discord app's call bar): `null` before it has said. */
+  discordCall: DiscordCall | null
   /** The open tabs, in the tab bar's order. */
   tabs: Tab[]
   /** The tab shown (`null`: none open, the Start Page of a new one). */
@@ -81,6 +83,7 @@ export const useSafari = create<SafariState>()(
       history: [],
       engine: DEFAULT_ENGINE,
       zooms: {},
+      discordCall: null,
       tabBar: 'separate',
       pageColour: true,
       nextId: 1,
@@ -400,6 +403,22 @@ export function receivePicture(tab: number, version: number): void {
 
 export function receiveNoDownload(): void {
   useSafari.setState({ noDownload: Date.now() })
+}
+
+/** Discord's call: whether there is one, the microphone muted, the sound deafened. */
+export interface DiscordCall {
+  inCall: boolean
+  muted: boolean
+  deafened: boolean
+}
+
+export function receiveDiscordCall(call: DiscordCall): void {
+  useSafari.setState({ discordCall: call })
+}
+
+/** Discord's call: mute or deafen toggled, or left. */
+export function discordCall(what: 'mute' | 'deafen' | 'leave'): void {
+  send({ action: 'discord', what })
 }
 
 export function receivePlaying(playing: boolean): void {

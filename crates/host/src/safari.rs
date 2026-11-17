@@ -96,6 +96,8 @@ const STARTUP_SCRIPT: &str = concat!(
     "(location.hostname === 'www.google.com' && location.pathname.startsWith('/recaptcha/')))) {\n",
     include_str!("cab_sound.js"),
     "\n",
+    include_str!("discord.js"),
+    "\n",
     include_str!("safari.js"),
     "\n} else {\n  try {\n    delete window.chrome.webview\n  } catch {}\n}\n",
 );
@@ -172,6 +174,10 @@ pub enum Command {
     /// A key pressed there.
     Key {
         key: Key,
+    },
+    /// Discord's call (the cab's call bar, a wheel button): `mute` or `deafen` toggled, or `leave` it.
+    Discord {
+        what: String,
     },
     /// Pause every page's sound (the game away, another player started)…
     Pause,
@@ -337,6 +343,8 @@ pub enum Report {
     NoDownload { tab: u32 },
     /// Whether any page plays sound.
     Playing(bool),
+    /// Discord's call as its page says (`discord.js`): whether there is one, muted, deafened.
+    Discord(serde_json::Value),
     /// The music's spectrum, while the cab's Equalizer asks for it.
     Spectrum(Vec<u8>),
 }
@@ -354,6 +362,7 @@ impl Report {
             Report::Picture { tab, version } => json!({ "type": "safariPicture", "tab": tab, "version": version }),
             Report::NoDownload { tab } => json!({ "type": "safariNoDownload", "tab": tab }),
             Report::Playing(playing) => json!({ "type": "safariPlaying", "playing": playing }),
+            Report::Discord(call) => json!({ "type": "safariDiscord", "call": call }),
             Report::Spectrum(bars) => return speakers::spectrum_message(bars),
         }
         .to_string()
@@ -636,6 +645,7 @@ impl Safari {
             // Discord's call goes on through the music and the game's pauses (the cab's Discord app): not paused.
             Command::Pause => self.post_media(r#"{"action":"pauseMedia"}"#),
             Command::Resume => self.post_media(r#"{"action":"resumeMedia"}"#),
+            Command::Discord { what } => self.discord(what)?,
             Command::Level { level } => {
                 let level = if level.is_finite() { level.clamp(0.0, 1.0) } else { 1.0 };
                 if self.told.level != Some(level) {
@@ -910,6 +920,15 @@ impl Safari {
                 } else if let Some(theme) = value.get("theme").and_then(serde_json::Value::as_str) {
                     tab.theme = theme.chars().take(64).collect();
                     dirty = true;
+                } else if let Some(call) = value.get("discord").filter(|call| call.is_object())
+                    && tab.is_discord()
+                {
+                    let call = serde_json::json!({
+                        "inCall": call["inCall"].as_bool().unwrap_or(false),
+                        "muted": call["muted"].as_bool().unwrap_or(false),
+                        "deafened": call["deafened"].as_bool().unwrap_or(false),
+                    });
+                    self.reports.push(Report::Discord(call));
                 } else if let Some(playing) = value.get("playing").and_then(serde_json::Value::as_bool)
                     && tab.playing != playing
                 {
@@ -1078,6 +1097,30 @@ impl Safari {
     /// Safari's WebView2 environment (its profile: the cab's Discord's too, for its sign-in window).
     pub fn environment(&self) -> &ICoreWebView2Environment {
         &self.environment
+    }
+
+    /// Discord's call: muted or deafened with Discord's own keys (Ctrl+Shift+M, Ctrl+Shift+D), or left
+    /// (`discord.js` presses its Disconnect).
+    fn discord(&self, what: &str) -> Result<(), webview::Error> {
+        for tab in self.tabs.iter().filter(|tab| tab.is_discord()) {
+            let key = match what {
+                "mute" => ("M", "KeyM", 77),
+                "deafen" => ("D", "KeyD", 68),
+                "leave" => {
+                    let _ = tab.view.post_json(r#"{"action":"discordLeave"}"#);
+                    continue;
+                }
+                _ => continue,
+            };
+            // Ctrl (2) and Shift (8).
+            for kind in ["rawKeyDown", "keyUp"] {
+                let event = serde_json::json!({
+                    "type": kind, "modifiers": 10, "key": key.0, "code": key.1, "windowsVirtualKeyCode": key.2,
+                });
+                tab.view.devtools("Input.dispatchKeyEvent", &event.to_string())?;
+            }
+        }
+        Ok(())
     }
 
     /// Discord's pages loaded again (signed in or out in its window since).
@@ -1491,6 +1534,9 @@ fn follow(view: &ICoreWebView2, events: &Rc<RefCell<Events>>) -> windows::core::
                         .and_then(|rest| rest.split(['/', ':', '?']).next())
                         .is_some_and(|host| host == "discord.com" || host.ends_with(".discord.com"));
                     let allowed = discord && kind == COREWEBVIEW2_PERMISSION_KIND_MICROPHONE;
+                    if discord {
+                        log!("safari: Discord asks permission {} ({})", kind.0, if allowed { "allowed" } else { "refused" });
+                    }
                     if allowed {
                         log!("safari: Discord may use the microphone");
                     }

@@ -128,7 +128,7 @@ export function Home() {
     if (!pressed || pressed.pointer !== event.pointerId) return
     // The button already up: its release never came (owner 2026-11-13, in the cab: dragged to the screen's edge and
     // let go there, the pages went on following the mouse). Let go here.
-    if ((event.buttons & 1) === 0) {
+    if (event.pointerType === 'mouse' && (event.buttons & 1) === 0) {
       up(event)
       return
     }

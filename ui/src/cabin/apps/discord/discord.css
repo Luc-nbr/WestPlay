@@ -1,0 +1,98 @@
+/* Discord's call bar (CallBar.tsx): under its page, the cab's own, as CarPlay's call controls. */
+.shell .dc-call {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: calc(18px * var(--text-scale, 1));
+  padding: calc(12px * var(--text-scale, 1)) calc(22px * var(--text-scale, 1));
+  border-radius: 0 0 var(--panel-radius) var(--panel-radius);
+  background: linear-gradient(180deg, #0e1a33, #0a1530);
+  color: #fff;
+  animation: dc-call-in 380ms var(--motion-ease) both;
+}
+
+@keyframes dc-call-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.shell .dc-call-state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  font-size: calc(20px * var(--text-scale, 1));
+  font-weight: 600;
+}
+
+/* The call's live light, breathing. */
+.shell .dc-call-state i {
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  background: #30d158;
+  box-shadow: 0 0 10px #30d158;
+  animation: dc-live 1.6s ease-in-out infinite;
+}
+
+@keyframes dc-live {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.shell .dc-round {
+  display: grid;
+  place-items: center;
+  width: calc(62px * var(--text-scale, 1));
+  height: calc(62px * var(--text-scale, 1));
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+  transition:
+    background 200ms ease,
+    transform 300ms var(--motion-ease);
+}
+
+.shell .dc-round:active {
+  transform: scale(0.9);
+}
+
+.shell .dc-round svg {
+  width: 46%;
+  height: 46%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Muted, deafened: white, its symbol dark and crossed, as CarPlay's. */
+.shell .dc-round[data-on] {
+  background: #fff;
+  color: #0a1530;
+}
+
+.shell .dc-slash {
+  stroke: #ff453a;
+  stroke-width: 2.4;
+}
+
+.shell .dc-leave {
+  background: #ff3b30;
+}
+
+.shell .dc-leave svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* The page above it: square at its foot, the bar rounding off the panel. */
+.shell .safari-app.discord-app:has(.dc-call) .sf-page {
+  border-radius: var(--panel-radius) var(--panel-radius) 0 0;
+}

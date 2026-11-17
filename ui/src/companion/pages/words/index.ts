@@ -187,6 +187,19 @@ export interface CompanionWords {
     duckDetail: string
     wheelChooseHint: string
     wheelClearHint: string
+    discordMute: string
+    discordDeafen: string
+    discordLeave: string
+    musicSound: string
+    musicSoundNote: string
+    bass: string
+    mid: string
+    treble: string
+    bassBoost: string
+    bassBoostDetail: string
+    distortion: string
+    distortionDetail: string
+    presets: Record<'flat' | 'bassBoost' | 'superBass' | 'vocal' | 'bright' | 'loudness' | 'rock' | 'radio' | 'distorted', string>
     wheelNote: string
     inUse: string
   }

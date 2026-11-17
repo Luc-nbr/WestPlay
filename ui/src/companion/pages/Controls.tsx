@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { call } from '../bridge'
 import { useKeyName } from '../keys'
 import { Group, KeyChooser, Note, Panel, Row, Slider, Switch } from '../room/parts'
@@ -14,6 +14,7 @@ import {
   SENSITIVITY,
   type Settings,
 } from '../useSettings'
+import { EqCurve, type Tone } from './EqCurve'
 import { KeyButton } from './KeyButton'
 import type { PageProps } from './page'
 
@@ -89,15 +90,7 @@ export function AudioPage({ settings: state, status, cw }: PageProps) {
   return (
     <Panel place="page" title={w.audio} sub={w.audioSub}>
       {settings && <AudioSetup settings={settings} update={update} status={status} w={w} />}
-      {settings && (
-        <Group title={w.musicSpeakers} place={8}>
-          <QualityRow
-            saved={100 - (settings.sound.wear ?? 0)}
-            w={w}
-            save={(value) => update({ ...settings, sound: { ...settings.sound, wear: 100 - value } })}
-          />
-        </Group>
-      )}
+      {settings && <MusicSound settings={settings} update={update} w={w} />}
       {error && <Note tone="bad">{error}</Note>}
     </Panel>
   )
@@ -212,6 +205,9 @@ function Keybinds({
         ))}
         <Row title={w.nextTrack} accessory={<WheelBind action="nextTrack" {...wheel} />} />
         <Row title={w.previousTrack} accessory={<WheelBind action="previousTrack" {...wheel} />} />
+        <Row title={w.discordMute} accessory={<WheelBind action="discordMute" {...wheel} />} />
+        <Row title={w.discordDeafen} accessory={<WheelBind action="discordDeafen" {...wheel} />} />
+        <Row title={w.discordLeave} accessory={<WheelBind action="discordLeave" {...wheel} />} />
       </Group>
       <Note tone={refused ? 'bad' : 'calm'}>{refused ?? w.keybindsNote.replaceAll('{key}', keyName)}</Note>
     </>
@@ -345,18 +341,6 @@ function Announce({
   const [listeningRecord, setListeningRecord] = useState(false)
   const press = (slot: number, action: string) => void call('announce_slot', { slot, action })
   const announce: Settings['announce'] = { ...DEFAULT_ANNOUNCE, ...settings.announce }
-  const [quality, setQuality] = useState(announce.quality)
-  const [savedQuality, setSavedQuality] = useState(announce.quality)
-  if (announce.quality !== savedQuality) {
-    setSavedQuality(announce.quality)
-    setQuality(announce.quality)
-  }
-  const [volume, setVolume] = useState(announce.volume)
-  const [saved, setSaved] = useState(announce.volume)
-  if (announce.volume !== saved) {
-    setSaved(announce.volume)
-    setVolume(announce.volume)
-  }
   return (
     <>
       <Group title={w.announce} place={6}>
@@ -451,39 +435,26 @@ function Announce({
             </span>
           }
         />
-        <div className="ob-row cp-slider-row">
-          <span className="ob-row-text">
-            <b>{w.announceVolume}</b>
-          </span>
-          <span className="ob-row-value">{`${volume}%`}</span>
-          <Slider
-            value={volume}
-            min={0}
-            max={100}
-            step={5}
-            label={w.announceVolume}
-            change={setVolume}
-            commit={(value) => update({ ...settings, announce: { ...announce, volume: value } })}
-          />
-        </div>
-        <div className="ob-row cp-slider-row">
-          <span className="ob-row-text">
-            <b>{w.announceQuality}</b>
-            <span>{w.announceQualityDetail}</span>
-          </span>
-          <span className="ob-row-value">
-            {quality < 34 ? w.qualityOld : quality < 67 ? w.qualityUsed : w.qualityNew}
-          </span>
-          <Slider
-            value={quality}
-            min={0}
-            max={100}
-            step={5}
-            label={w.announceQuality}
-            change={setQuality}
-            commit={(value) => update({ ...settings, announce: { ...announce, quality: value } })}
-          />
-        </div>
+        <LiveSlider
+          label={w.announceVolume}
+          saved={announce.volume}
+          format={(value) => `${value}%`}
+          save={(volume) => update({ ...settings, announce: { ...announce, volume } })}
+        />
+        <LiveSlider
+          label={w.announceQuality}
+          detail={w.announceQualityDetail}
+          saved={announce.quality}
+          format={(value) => (value < 34 ? w.qualityOld : value < 67 ? w.qualityUsed : w.qualityNew)}
+          save={(quality) => update({ ...settings, announce: { ...announce, quality } })}
+        />
+        <LiveSlider
+          label={w.distortion}
+          detail={w.distortionDetail}
+          saved={announce.drive}
+          format={(value) => `${value}%`}
+          save={(drive) => update({ ...settings, announce: { ...announce, drive } })}
+        />
       </Group>
       <Group title={w.slots} place={6}>
         {slots.slots.map((length, slot) => {
@@ -560,23 +531,150 @@ function Announce({
   )
 }
 
-/** The speakers' quality, old to new: its slider follows the thumb, and it's saved once it's let go. */
-function QualityRow({ saved, w, save }: { saved: number; w: PageProps['cw']['controls']; save(value: number): void }) {
-  const [quality, setQuality] = useState(saved)
+/**
+ * A slider that changes the sound as it moves: saved while it's dragged (at most every 120 ms) and once let go, so
+ * what's heard follows the thumb. A value saved elsewhere (the cab, another window) moves it.
+ */
+function LiveSlider({
+  label,
+  detail,
+  saved,
+  min = 0,
+  max = 100,
+  step = 5,
+  format,
+  save,
+}: {
+  label: string
+  detail?: string
+  saved: number
+  min?: number
+  max?: number
+  step?: number
+  format(value: number): string
+  save(value: number): void
+}) {
+  const [value, setValue] = useState(saved)
   const [lastSaved, setLastSaved] = useState(saved)
+  const sent = useRef(0)
   if (saved !== lastSaved) {
     setLastSaved(saved)
-    setQuality(saved)
+    setValue(saved)
   }
   return (
     <div className="ob-row cp-slider-row">
       <span className="ob-row-text">
-        <b>{w.announceQuality}</b>
-        <span>{w.announceQualityDetail}</span>
+        <b>{label}</b>
+        {detail && <span>{detail}</span>}
       </span>
-      <span className="ob-row-value">{quality < 34 ? w.qualityOld : quality < 67 ? w.qualityUsed : w.qualityNew}</span>
-      <Slider value={quality} min={0} max={100} step={5} label={w.announceQuality} change={setQuality} commit={save} />
+      <span className="ob-row-value">{format(value)}</span>
+      <Slider
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        label={label}
+        change={(next) => {
+          setValue(next)
+          const now = performance.now()
+          if (now - sent.current >= 120) {
+            sent.current = now
+            save(next)
+          }
+        }}
+        commit={save}
+      />
     </div>
+  )
+}
+
+/** A sound preset: the tone (dB each), the bass boost and the distortion (0 to 100). */
+interface Preset {
+  id: string
+  bass: number
+  mid: number
+  treble: number
+  boost: number
+  drive: number
+}
+
+const PRESETS: Preset[] = [
+  { id: 'flat', bass: 0, mid: 0, treble: 0, boost: 0, drive: 0 },
+  { id: 'bassBoost', bass: 4, mid: 0, treble: 1, boost: 60, drive: 0 },
+  { id: 'superBass', bass: 6, mid: -1, treble: 0, boost: 100, drive: 15 },
+  { id: 'vocal', bass: -2, mid: 4, treble: 2, boost: 0, drive: 0 },
+  { id: 'bright', bass: -1, mid: 1, treble: 5, boost: 0, drive: 0 },
+  { id: 'loudness', bass: 4, mid: -1, treble: 4, boost: 20, drive: 0 },
+  { id: 'rock', bass: 3, mid: -1, treble: 3, boost: 20, drive: 20 },
+  { id: 'radio', bass: -4, mid: 5, treble: -4, boost: 0, drive: 35 },
+  { id: 'distorted', bass: 2, mid: 1, treble: 1, boost: 40, drive: 80 },
+]
+
+/**
+ * The music's sound on the truck's speakers (every music app's): a preset, or each part by hand: bass, mid and treble
+ * (the cab's own Equalizer's), a bass boost under them, distortion, and how worn the speakers are. Live as moved.
+ */
+function MusicSound({
+  settings,
+  update,
+  w,
+}: {
+  settings: Settings
+  update(settings: Settings): void
+  w: PageProps['cw']['controls']
+}) {
+  const sound = settings.sound
+  const curve = sound.custom ? sound.equalizer : { bass: 0, mid: 0, treble: 0 }
+  const set = (change: Partial<Settings['sound']>) => update({ ...settings, sound: { ...sound, ...change } })
+  const chosen = PRESETS.find(
+    (preset) =>
+      preset.bass === curve.bass &&
+      preset.mid === curve.mid &&
+      preset.treble === curve.treble &&
+      preset.boost === (sound.boost ?? 0) &&
+      preset.drive === (sound.drive ?? 0),
+  )
+  return (
+    <>
+      <Group title={w.musicSound} place={8}>
+        <div className="ob-row dashly-presets">
+          {PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className="dashly-preset"
+              data-chosen={chosen?.id === preset.id || undefined}
+              onClick={() =>
+                set({
+                  custom: preset.id !== 'flat',
+                  equalizer: { bass: preset.bass, mid: preset.mid, treble: preset.treble },
+                  boost: preset.boost,
+                  drive: preset.drive,
+                })
+              }
+            >
+              {w.presets[preset.id as keyof typeof w.presets]}
+            </button>
+          ))}
+        </div>
+        <ToneCurve sound={sound} curve={curve} set={set} w={w} />
+        <LiveSlider
+          label={w.distortion}
+          detail={w.distortionDetail}
+          saved={sound.drive ?? 0}
+          format={(v) => `${v}%`}
+          save={(drive) => set({ drive })}
+        />
+        <LiveSlider
+          label={w.announceQuality}
+          detail={w.announceQualityDetail}
+          saved={100 - (sound.wear ?? 0)}
+          format={(v) => (v < 34 ? w.qualityOld : v < 67 ? w.qualityUsed : w.qualityNew)}
+          save={(v) => set({ wear: 100 - v })}
+        />
+      </Group>
+      <Note tone="calm">{w.musicSoundNote}</Note>
+    </>
   )
 }
 
@@ -745,5 +843,65 @@ function AudioSetup({
       {audio?.error && <Note tone="bad">{audio.error}</Note>}
       <Note tone="calm">{w.audioNote}</Note>
     </>
+  )
+}
+
+/** The tone as an equalizer's curve (EqCurve.tsx): what's heard follows the handles as they're dragged (saved at
+ * most every 120 ms), and once let go. */
+function ToneCurve({
+  sound,
+  curve,
+  set,
+  w,
+}: {
+  sound: Settings['sound']
+  curve: { bass: number; mid: number; treble: number }
+  set(change: Partial<Settings['sound']>): void
+  w: PageProps['cw']['controls']
+}) {
+  const saved: Tone = { bass: curve.bass, mid: curve.mid, treble: curve.treble, boost: sound.boost ?? 0 }
+  const [tone, setTone] = useState<Tone | null>(null)
+  const sent = useRef(0)
+  const save = (next: Tone) =>
+    set({ custom: true, equalizer: { bass: next.bass, mid: next.mid, treble: next.treble }, boost: next.boost })
+  const shown = tone ?? saved
+  const db = (value: number) => `${value > 0 ? '+' : ''}${value} dB`
+  return (
+    <div className="ob-row dashly-eq-row">
+      <EqCurve
+        tone={shown}
+        names={{ bass: w.bass, mid: w.mid, treble: w.treble, boost: w.bassBoost }}
+        change={(next) => {
+          setTone(next)
+          const now = performance.now()
+          if (now - sent.current >= 120) {
+            sent.current = now
+            save(next)
+          }
+        }}
+        commit={(next) => {
+          save(next)
+          setTone(null)
+        }}
+      />
+      <div className="dashly-eq-values">
+        <span>
+          <b>{w.bassBoost}</b>
+          {shown.boost}%
+        </span>
+        <span>
+          <b>{w.bass}</b>
+          {db(shown.bass)}
+        </span>
+        <span>
+          <b>{w.mid}</b>
+          {db(shown.mid)}
+        </span>
+        <span>
+          <b>{w.treble}</b>
+          {db(shown.treble)}
+        </span>
+      </div>
+    </div>
   )
 }

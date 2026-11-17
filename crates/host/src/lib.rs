@@ -322,6 +322,10 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
     let mut ipad_checked: Option<Instant> = None;
     let mut head_unit = false;
     let mut truck_view = String::from("dashboard");
+    // While the iPad is the head unit, where the truck's page last put each player (its show or hide, held back):
+    // put back where it was once the iPad isn't, the iPad's places let go.
+    let mut truck_places: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+    let mut replay: Vec<String> = Vec::new();
     // The wheel's buttons (controller.rs), as the player bound them.
     let controllers = controller::Controllers::start();
     let mut controller_presses: u64 = 0;
@@ -856,6 +860,8 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         if applied_settings != Some(config.settings.generation()) {
             applied_settings = Some(config.settings.generation());
             let current = config.settings.get();
+            // The music's sound as the companion shapes it, at once (its sliders move it live).
+            equalizer = current.sound.playing();
             announcer.configure(
                 &current.announce,
                 current.controller.contains_key("pushToTalk"),
@@ -918,6 +924,16 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     }
                     if !press.down {
                         continue;
+                    }
+                    // Discord's call, from the wheel: mute, deafen, hang up.
+                    let discord = match action.as_str() {
+                        "discordMute" => Some("mute"),
+                        "discordDeafen" => Some("deafen"),
+                        "discordLeave" => Some("leave"),
+                        _ => None,
+                    };
+                    if let (Some(what), Some(browser)) = (discord, safari.as_mut()) {
+                        let _ = browser.command(&stage, &safari::Command::Discord { what: what.to_owned() });
                     }
                     if let Some(slot) = action.strip_prefix("slot").and_then(|n| n.parse::<usize>().ok()) {
                         announcer.play(slot.saturating_sub(1));
@@ -1104,7 +1120,10 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                                 continue;
                             }
                             match mirror::Mirror::start(gpu, &visual, tag, of) {
-                                Ok(started) => mirrors.push(started),
+                                Ok(started) => {
+                                    log!("iPad: mirroring picture {tag} ({of})");
+                                    mirrors.push(started)
+                                }
                                 Err(e) => {
                                     log!("iPad: a player's picture can't be captured: {e}");
                                     mirror_failed.push((tag, of));
@@ -1124,6 +1143,20 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                 head_unit = now_head_unit;
                 log!("iPad: {}", if head_unit { "the head unit" } else { "no longer the head unit" });
                 let _ = webview.post_json(&head_unit_message(head_unit, &truck_view));
+                // The players' pages placed for the other screen let go (else, the iPad gone, Safari's page stayed
+                // where the iPad had it, over the truck's screen, taking its mouse); the truck's own places back.
+                if let Some(browser) = safari.as_mut() {
+                    let _ = browser.command(&stage, &safari::Command::Hide { tab: None });
+                }
+                if let Some(player) = &youtube {
+                    let _ = player.command(&youtube::Command::Hide);
+                }
+                if let Some(player) = &youtube_music {
+                    let _ = player.command(&youtube_music::Command::Hide);
+                }
+                if !head_unit {
+                    replay.extend(std::mem::take(&mut truck_places).into_values());
+                }
                 // The interaction key again, as the head unit has it.
                 applied_settings = None;
             }
@@ -1135,6 +1168,14 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         }
         let ipad_messages = ipad.as_ref().map(|ipad| ipad.take_messages()).unwrap_or_default();
         let ipad_messages = ipad_messages.into_iter().filter(|message| {
+            // What the iPad asks of Safari (Discord's app is Safari's): only the action, never an address.
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(message)
+                && value["type"].as_str() == Some("safari")
+                && let Some(action) = value["command"]["action"].as_str()
+                && matches!(action, "show" | "hide" | "open" | "close")
+            {
+                log!("iPad: safari {action} (tab {})", value["command"]["tab"]);
+            }
             match serde_json::from_str::<serde_json::Value>(message).ok().as_ref().and_then(|m| m["type"].as_str()) {
                 Some("truckView") => {
                     let view = serde_json::from_str::<serde_json::Value>(message).ok();
@@ -1188,6 +1229,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                             }
                             Some("up") => {
                                 if let Some((_, _, false)) = ipad_touch {
+                                    log!("iPad: tap on the web page at ({:.0}, {:.0})", point.0, point.1);
                                     for kind in ["mousePressed", "mouseReleased"] {
                                         let event = serde_json::json!({
                                             "type": kind, "x": point.0, "y": point.1, "button": "left",
@@ -1211,11 +1253,19 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
             if !head_unit {
                 return true;
             }
-            let Ok(message) = serde_json::from_str::<serde_json::Value>(message) else { return true };
-            let player = matches!(message["type"].as_str(), Some("youtube" | "youtubeMusic" | "safari"));
-            !(player && matches!(message["command"]["action"].as_str(), Some("show" | "hide")))
+            let Ok(value) = serde_json::from_str::<serde_json::Value>(message) else { return true };
+            let player = value["type"].as_str().filter(|kind| matches!(*kind, "youtube" | "youtubeMusic" | "safari"));
+            let placing = matches!(value["command"]["action"].as_str(), Some("show" | "hide"));
+            match player {
+                Some(kind) if placing => {
+                    truck_places.insert(kind.to_owned(), message.clone());
+                    false
+                }
+                _ => true,
+            }
         });
-        let page_messages: Vec<String> = truck_messages.chain(ipad_messages).collect();
+        let truck_messages: Vec<String> = std::mem::take(&mut replay).into_iter().chain(truck_messages).collect();
+        let page_messages: Vec<String> = truck_messages.into_iter().chain(ipad_messages).collect();
         for message in page_messages {
             match parse_page_message(&message) {
                 // The page announces itself when it (re)loads; it missed everything sent before, so send the
@@ -1330,7 +1380,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                 Some(PageMessage::Equalizer { equalizer: curve, custom }) => {
                     let mut settings = config.settings.get();
                     // The cab's tone only: the companion's coach choice kept.
-                    let curve = speakers::Equalizer { wear: 0, ..curve.clamped() };
+                    let curve = speakers::Equalizer { wear: 0, boost: 0, drive: 0, ..curve.clamped() };
                     let sound = settings::SoundSettings { equalizer: curve, custom, ..settings.sound };
                     equalizer = sound.playing();
                     if settings.sound != sound {
@@ -3130,7 +3180,7 @@ mod tests {
         assert_eq!(
             parse_page_message(r#"{"type":"equalizer","bass":-3,"mid":0,"treble":2,"custom":true}"#),
             Some(PageMessage::Equalizer {
-                equalizer: crate::speakers::Equalizer { bass: -3, mid: 0, treble: 2, wear: 0 },
+                equalizer: crate::speakers::Equalizer { bass: -3, mid: 0, treble: 2, wear: 0, boost: 0, drive: 0 },
                 custom: true
             })
         );
@@ -3138,7 +3188,7 @@ mod tests {
         assert_eq!(
             parse_page_message(r#"{"type":"equalizer","bass":4}"#),
             Some(PageMessage::Equalizer {
-                equalizer: crate::speakers::Equalizer { bass: 4, mid: 0, treble: 0, wear: 0 },
+                equalizer: crate::speakers::Equalizer { bass: 4, mid: 0, treble: 0, wear: 0, boost: 0, drive: 0 },
                 custom: false
             })
         );
@@ -3305,7 +3355,7 @@ mod tests {
             })
         );
         settings.screen.truck_strip = crate::settings::TruckStrip::Off;
-        settings.sound.equalizer = crate::speakers::Equalizer { bass: -9, mid: 2, treble: 6, wear: 0 };
+        settings.sound.equalizer = crate::speakers::Equalizer { bass: -9, mid: 2, treble: 6, wear: 0, boost: 0, drive: 0 };
         settings.look.wallpaper = Some("custom:Dusk".into());
         settings.look.icon_set = Some("Retro".into());
         settings.language = crate::settings::LanguageCode::new("de_de");
@@ -3319,7 +3369,7 @@ mod tests {
         // The curve is kept whichever is chosen; what plays is it, with Custom only.
         assert_eq!(settings.sound.playing(), crate::speakers::Equalizer::default());
         settings.sound.custom = true;
-        assert_eq!(settings.sound.playing(), crate::speakers::Equalizer { bass: -6, mid: 2, treble: 6, wear: 0 });
+        assert_eq!(settings.sound.playing(), crate::speakers::Equalizer { bass: -6, mid: 2, treble: 6, wear: 0, boost: 0, drive: 0 });
     }
 
     #[test]

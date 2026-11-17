@@ -1436,3 +1436,8 @@
     transition-duration: 1ms !important;
   }
 }
+
+/* Discord, as an app of its own: its page on Discord's own ground while it comes in (never a browser's white). */
+.shell .safari-app.discord-app .sf-page {
+  background: #313338;
+}

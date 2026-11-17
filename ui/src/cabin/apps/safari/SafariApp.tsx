@@ -61,7 +61,7 @@ import './safari.css'
  * tab. The bars take the page's own colour (Show Color in Tab Bar). The sidebar's part the cab's Safari has is
  * History.
  */
-export function SafariApp() {
+export function SafariApp({ app }: { app?: { name: string; className: string; footer?: ReactNode } } = {}) {
   const text = useText()
   const tab = useSafari(activeTab)
   const tabs = useSafari((state) => state.tabs)
@@ -71,10 +71,10 @@ export function SafariApp() {
   const compact = useSafari((state) => state.tabBar === 'compact')
   const tinted = useSafari((state) => state.pageColour)
 
-  // Opened onto no tab: a new one, its address field typed into, as Safari opens.
+  // Opened onto no tab: a new one, its address field typed into, as Safari opens (an app of Safari's opens its own).
   useEffect(() => {
-    if (useSafari.getState().tabs.length === 0) newTab()
-  }, [])
+    if (!app && useSafari.getState().tabs.length === 0) newTab()
+  }, [app])
 
   // The tab overview and History come over the page and go again, animated (presence.ts); the page's own bars stay
   // under them as they go, and the page itself (the host's) shows again once they've gone, its picture till then.
@@ -84,14 +84,15 @@ export function SafariApp() {
   const pageShown = view === 'page' || overview === 'out' || history === 'out'
   const showsPage = pageShown && !!tab?.url && !page?.failed
   const pageLive = showsPage && view === 'page' && !covered
-  const full = showsPage && !!page?.fullScreen
+  // An app of Safari's own (Discord): its page alone, filling the app, as a native app's, no browser round it.
+  const full = (showsPage && !!page?.fullScreen) || !!app
   const colours = pageColours(tinted && showsPage && typing === null ? page?.theme : undefined)
 
   return (
     <section
-      className={`app-panel safari-app${full ? ' full-screen' : ''}${colours ? ` page-${colours.look}` : ''}`}
+      className={`app-panel safari-app${full ? ' full-screen' : ''}${colours ? ` page-${colours.look}` : ''}${app ? ` ${app.className}` : ''}`}
       style={colours ? ({ '--sf-bar': colours.bar } as CSSProperties) : undefined}
-      aria-label={text.apps.safari}
+      aria-label={app?.name ?? text.apps.safari}
     >
       {pageShown && (
         <>
@@ -106,6 +107,7 @@ export function SafariApp() {
             {tab && pageLive && <WebField tab={tab.id} page={page} />}
             {tab && pageLive && <PageList tab={tab.id} list={page?.list} />}
           </div>
+          {app?.footer}
           <PageDialog />
         </>
       )}

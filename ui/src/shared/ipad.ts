@@ -68,12 +68,19 @@ export function installIpad(): void {
     // The players' pictures show under the page, where it leaves room for them (as on the truck's frame).
     'html{background:#000}body{background:transparent}#root{position:relative;z-index:1}' +
     '.ipad-picture{position:fixed;z-index:0;object-fit:fill;pointer-events:none;display:none}' +
-    '*{-webkit-tap-highlight-color:transparent}'
+    '*{-webkit-tap-highlight-color:transparent}' +
+    // The cab follows every drag itself (Home's pages, its lists: dragScroll.ts): Safari taking one over as its own
+    // pan cancels it halfway (a swipe that went nowhere).
+    '*{touch-action:none!important}'
   document.head.append(style)
   const pictures = installPictures()
   // Safari shows a press (`:active`) on a touchscreen only on pages listening for touches.
   document.addEventListener('touchstart', () => {}, { passive: true })
   reportFrames()
+  // Gone to the background, or back (iPadOS stops a page there): told to Dashly's log.
+  document.addEventListener('visibilitychange', () => {
+    ;(window as unknown as { westplayTell?: (text: string) => void }).westplayTell?.(`page ${document.visibilityState}`)
+  })
 
   const listeners = new Set<Listener>()
   const queued: string[] = []
@@ -207,7 +214,9 @@ function installPictures(): { placed: (message: unknown) => void } {
       return
     }
     if (kind === 'up') touching = null
-    sendToWestplay({ type: 'ipadWeb', kind, x: event.clientX, y: event.clientY })
+    // In the screen's pixels, as Safari places its page (WebPage.tsx): two to the iPad's point.
+    const scale = window.devicePixelRatio || 1
+    sendToWestplay({ type: 'ipadWeb', kind, x: event.clientX * scale, y: event.clientY * scale })
   }
   window.addEventListener('pointerdown', (event) => touch('down', event), true)
   window.addEventListener('pointermove', (event) => touch('move', event), true)
@@ -222,14 +231,17 @@ function installPictures(): { placed: (message: unknown) => void } {
       if (command.action === 'hide') {
         entry.img.style.display = 'none'
       } else if (command.action === 'show') {
-        const rect = {
-          x: Number(command.x) || 0,
-          y: Number(command.y) || 0,
-          width: Number(command.width) || 0,
-          height: Number(command.height) || 0,
-        }
+        // Safari places its page in the screen's pixels (WebPage.tsx): the iPad's points are each two of them.
+        const scale = tag === PICTURE_TAGS.safari ? window.devicePixelRatio || 1 : 1
+        const points = (r: Rect): Rect => ({
+          x: (Number(r.x) || 0) / scale,
+          y: (Number(r.y) || 0) / scale,
+          width: (Number(r.width) || 0) / scale,
+          height: (Number(r.height) || 0) / scale,
+        })
+        const rect = points(command as unknown as Rect)
         entry.rect = rect
-        entry.covers = Array.isArray(command.covers) ? (command.covers as Rect[]) : []
+        entry.covers = Array.isArray(command.covers) ? (command.covers as Rect[]).map(points) : []
         Object.assign(entry.img.style, {
           display: 'block',
           left: `${rect.x}px`,

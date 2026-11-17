@@ -38,6 +38,7 @@ import {
   receiveOpened as receiveSafariOpened,
   receivePicture as receiveSafariPicture,
   receivePlaying as receiveSafariPlaying,
+  receiveDiscordCall,
   receiveTab as receiveSafariTab,
 } from '../apps/safari/safari'
 import {
@@ -689,6 +690,9 @@ function receiveHostMessage(now: () => number): (message: HostMessage) => void {
         break
       case 'safariPlaying':
         receiveSafariPlaying(message.playing)
+        break
+      case 'safariDiscord':
+        receiveDiscordCall(message.call)
         break
       case 'youtubeMusic':
         receiveYouTubeMusicState(message)

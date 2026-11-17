@@ -267,6 +267,7 @@ export type HostMessage =
   | { type: 'safariNoDownload'; tab: number }
   /** Whether any of Safari's pages plays sound. */
   | { type: 'safariPlaying'; playing: boolean }
+  | { type: 'safariDiscord'; call: { inCall: boolean; muted: boolean; deafened: boolean } }
   /** What the page keeps, kept by WestPlay for every page shown (by storage key; `null`: nothing kept yet). */
   | { type: 'pageState'; values: Record<string, string> | null }
   /** One part of it changed (`null`: forgotten). */
@@ -442,6 +443,7 @@ export type SafariCommand =
   | { action: 'stop'; tab: number }
   | { action: 'type'; text: string }
   | { action: 'key'; key: 'backspace' | 'enter' }
+  | { action: 'discord'; what: 'mute' | 'deafen' | 'leave' }
   | { action: 'pause' }
   | { action: 'resume' }
   | { action: 'level'; level: number }
@@ -1185,7 +1187,11 @@ export const IS_DEMO = typeof location !== 'undefined' && new URLSearchParams(lo
 
 /** Whether the page runs inside the WestPlay host (and not in a plain browser preview, nor as the demo). */
 export function isInHost(): boolean {
-  return !IS_DEMO && window.chrome?.webview !== undefined
+  // On the iPad, the page's own head says so before any script runs (remote.rs `ipad_page`): its connection to Dashly
+  // (ipad.ts) stands in for WebView2's only once its module has run, and a module that asks as it loads (a shared
+  // chunk, run first) must hear yes all the same.
+  const ipad = (window as unknown as { westplayIpad?: boolean }).westplayIpad === true
+  return !IS_DEMO && (ipad || window.chrome?.webview !== undefined)
 }
 
 /**

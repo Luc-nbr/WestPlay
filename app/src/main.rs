@@ -138,6 +138,14 @@ fn announce_slot(slot: usize, action: String) {
     westplay_host::announce_slot(slot, &action);
 }
 
+/// The companion's window full screen, or back (its button, F11): whether it is now.
+#[tauri::command]
+fn toggle_fullscreen(window: WebviewWindow) -> bool {
+    let full = !window.is_fullscreen().unwrap_or(false);
+    let _ = window.set_fullscreen(full);
+    full
+}
+
 #[tauri::command]
 fn discord_sign_in(accounts: State<Accounts>) {
     accounts.0.discord.request(AccountAction::SignIn);
@@ -246,6 +254,7 @@ fn main() {
             apple_music_check,
             open_support_page,
             discord_sign_in,
+            toggle_fullscreen,
             discord_sign_out,
             discord_check,
             announce_slot,

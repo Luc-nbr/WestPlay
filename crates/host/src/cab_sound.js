@@ -63,10 +63,13 @@ window.westplayCabSound = (media, say) => {
     ['mid', { type: 'peaking', frequency: 1000, Q: 0.7 }],
     ['treble', { type: 'highshelf', frequency: 8000 }],
   ]
-  const flat = () => TONE.every(([band]) => !equalizer[band]) && !wear
+  const flat = () => TONE.every(([band]) => !equalizer[band]) && !wear && !boost && !distort
   // The speakers' wear (the companion's speaker quality): 0 new, the sound as it is; to 100, worn-out old units:
   // a narrow, honky band, driven into distortion, a little hiss. After the tone, before the speakers.
   let wear = 0
+  // The companion's bass boost (0 to 100: up to 12 dB at 70 Hz) and distortion (0 to 100), with the wear.
+  let boost = 0
+  let distort = 0
   const setWear = () => {
     if (!audio?.wear) return
     const old = wear / 100
@@ -76,12 +79,18 @@ window.westplayCabSound = (media, say) => {
     for (const filter of highpass) glide(filter.frequency, old ? 20 * (220 / 20) ** old : 10)
     glide(lowpass.frequency, old ? 20000 * (7000 / 20000) ** old : 22000)
     glide(honk.gain, 11 * old)
-    glide(gain.gain, 10 ** ((-6 * old) / 20))
+    const b = boost / 100
+    const d = distort / 100
+    // The bass boost: up to 18 dB under 60 Hz, and a sub peak of 8 dB at 45 Hz (felt as much as heard).
+    glide(audio.wear.boostShelf.gain, 18 * b)
+    glide(audio.wear.subPeak.gain, 8 * b)
+    // Made up for: the wear's peak, part of the boost (the bass stays far louder than the rest), the distortion.
+    glide(gain.gain, 10 ** ((-6 * old - 8 * b - 5 * d) / 20))
     glide(hiss.gain, 0.004 * old * old)
     glide(audio.wear.bassDrive.gain, 1 + 11 * old)
     glide(audio.wear.bassMix.gain, 0.8 * old)
-    const drive = 1 + 0.6 * old + 3 * old * old
-    if (old === 0) shaper.curve = null
+    const drive = (1 + 0.6 * old + 3 * old * old) * (1 + 7 * d)
+    if (old === 0 && d === 0) shaper.curve = null
     else {
       const curve = new Float32Array(1024)
       for (let i = 0; i < curve.length; i++) {
@@ -224,7 +233,12 @@ window.westplayCabSound = (media, say) => {
     hissing.connect(hiss)
     hiss.connect(worn)
     hissing.start()
-    trim.connect(highpass[0])
+    // The bass boost first: a shelf under the bass.
+    const boostShelf = keep(new BiquadFilterNode(context, { type: 'lowshelf', frequency: 60, gain: 0 }))
+    const subPeak = keep(new BiquadFilterNode(context, { type: 'peaking', frequency: 45, Q: 1.1, gain: 0 }))
+    trim.connect(boostShelf)
+    boostShelf.connect(subPeak)
+    subPeak.connect(highpass[0])
     highpass[0].connect(highpass[1])
     highpass[1].connect(lowpass)
     lowpass.connect(honk)
@@ -245,7 +259,7 @@ window.westplayCabSound = (media, say) => {
     rattle.connect(buzz)
     buzz.connect(bassMix)
     bassMix.connect(worn)
-    audio.wear = { highpass, lowpass, honk, shaper, gain: worn, hiss, bassDrive, bassMix }
+    audio.wear = { highpass, lowpass, honk, shaper, gain: worn, hiss, bassDrive, bassMix, boostShelf, subPeak }
     setWear()
     // Beside it, the spectrum's ear (measuring, playing nothing).
     audio.analyser = keep(new AnalyserNode(context, { fftSize: 4096, smoothingTimeConstant: 0.5, minDecibels: -80, maxDecibels: -22 }))
@@ -371,6 +385,8 @@ window.westplayCabSound = (media, say) => {
     equalizer(told) {
       equalizer = Object.fromEntries(TONE.map(([band]) => [band, Number(told?.[band]) || 0]))
       wear = Math.min(100, Math.max(0, Number(told?.wear) || 0))
+      boost = Math.min(100, Math.max(0, Number(told?.boost) || 0))
+      distort = Math.min(100, Math.max(0, Number(told?.drive) || 0))
       setTone(false)
       setWear()
       try {
