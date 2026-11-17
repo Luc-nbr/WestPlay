@@ -187,12 +187,12 @@ export function Shell({ children, overlay, entering = false }: ShellProps) {
         type="button"
         className={truckScreen ? 'return-button shown' : 'return-button'}
         style={{ left: button.x - RETURN_BUTTON_SIZE / 2, top: button.y - RETURN_BUTTON_SIZE / 2 }}
-        aria-label="WestPlay"
+        aria-label="Dashly"
         aria-hidden={!truckScreen}
         tabIndex={truckScreen ? 0 : -1}
         onClick={() => useCabin.getState().setTruckScreen(false)}
       >
-        <img src="/westplay.png" alt="" />
+        <img src="/dashly-mark.svg" alt="" />
       </button>
       {overlay}
       {/* Over everything, the cursor included: the image's outermost pixels, which the game repeats into

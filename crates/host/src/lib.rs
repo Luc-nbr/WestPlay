@@ -5,11 +5,14 @@
 
 #[macro_use]
 pub mod log;
+mod announce;
+mod asio;
 mod apple_music;
 pub mod browser;
 mod brightness;
 mod camera;
 mod capture;
+mod controller;
 mod cursor;
 pub mod customize;
 pub mod fitted;
@@ -25,7 +28,10 @@ mod performance;
 mod planner;
 mod play_log;
 mod player;
+mod page_state;
 mod pointer;
+mod mirror;
+mod remote;
 pub mod route;
 mod route_change;
 mod safari;
@@ -131,8 +137,28 @@ pub struct Status {
     pub map_built: Option<u64>,
     /// Every profile's map: ready, being built, to build, failed...
     pub profile_maps: Vec<maps::ProfileMap>,
+    /// The iPad (`remote`): where to open WestPlay on it and its pairing code, while switched on.
+    pub ipad: Option<remote::IpadStatus>,
+    /// The controller button last pressed (`controller`), for the companion to bind: `count` new with each press.
+    pub controller_press: Option<ControllerPress>,
+    /// The announcements' slots (`announce`).
+    pub announce: announce::AnnounceStatus,
     pub error: Option<String>,
 }
+
+/// A controller's button pressed, as the companion sees it.
+#[derive(Clone, Debug, Default, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ControllerPress {
+    pub device: String,
+    pub name: String,
+    pub button: u32,
+    pub count: u64,
+}
+
+/// What a controller's button can be bound to: the keybinds' actions (the page acts on them: `keybind_message`).
+const CONTROLLER_ACTIONS: [&str; 7] =
+    ["volumeUp", "volumeDown", "playPause", "nextTrack", "previousTrack", "brightnessDown", "brightnessUp"];
 
 /// The companion window's requests to sign YouTube, Spotify or Apple Music in or out (or to know whether it
 /// is), from any thread, for the host to carry out as the cab's apps would.
@@ -280,6 +306,38 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         Content::Html(_) => String::new(),
         Content::Folder { .. } => "westplay.cabin".to_string(),
     });
+    // What the page keeps between runs, the same for every page shown (page_state.rs).
+    let mut page_state = page_state::PageState::load(&config.data_dir);
+    // The iPad (remote.rs), served while the player has it switched on; and while it's connected (or just gone),
+    // the head unit: the truck's screen shows what the iPad chose and takes no mouse.
+    let ipad_root = match &config.content {
+        Content::Folder { root, .. } => root.clone(),
+        _ => PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../ui/dist"),
+    };
+    let mut ipad: Option<Arc<remote::Remote>> = None;
+    let mut ipad_checked: Option<Instant> = None;
+    let mut head_unit = false;
+    let mut truck_view = String::from("dashboard");
+    // The wheel's buttons (controller.rs), as the player bound them.
+    let controllers = controller::Controllers::start();
+    let mut controller_presses: u64 = 0;
+    // The microphone through the coach's speakers (announce.rs): never on as WestPlay starts.
+    let announcer = ANNOUNCER.get_or_init(|| announce::Announcer::start(config.data_dir.join("announcements")));
+    {
+        let mut settings = config.settings.get();
+        if settings.announce.on {
+            settings.announce.on = false;
+            config.settings.set(settings.clone());
+            (config.on_settings)(&settings);
+        }
+    }
+    // The players' pictures for the iPad while it's the head unit (mirror.rs), captured on a device of their own.
+    let mut mirror_gpu: Option<Gpu> = None;
+    let mut mirrors: Vec<mirror::Mirror> = Vec::new();
+    let mut mirror_failed: Vec<(u8, u64)> = Vec::new();
+    let mut pictures: Option<std::sync::mpsc::SyncSender<mirror::Picture>> = None;
+    // A touch on a Safari page on the iPad: where it went down and was last, and whether it has scrolled.
+    let mut ipad_touch: Option<((f64, f64), (f64, f64), bool)> = None;
     // The player's maps, built from their game (maps.rs), for the cab's Maps app.
     let maps_dir = config.data_dir.join("maps");
     let _ = std::fs::create_dir_all(&maps_dir);
@@ -722,6 +780,8 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
 
         if applied_settings != Some(config.settings.generation()) {
             applied_settings = Some(config.settings.generation());
+            let current = config.settings.get();
+            announcer.configure(&current.announce, current.controller.contains_key("pushToTalk"));
             // The player may have chosen another GPU: the list again too (an external GPU plugged in).
             let graphics = config.settings.get().graphics;
             if graphics.gpu != chosen_gpu {
@@ -731,7 +791,9 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
             }
             let interaction = config.settings.get().interaction;
             pointer.set_sensitivity(interaction.sensitivity.get());
-            host.interaction_key.store(interaction.key.virtual_key(), Ordering::Release);
+            // While the iPad is the head unit no key uses the truck's screen (0xFF: no key).
+            let key = if head_unit { 0xFF } else { interaction.key.virtual_key() };
+            host.interaction_key.store(key, Ordering::Release);
             let toggle = interaction.mode == settings::InteractionMode::Toggle;
             host.interaction_toggle.store(u32::from(toggle), Ordering::Release);
             for (slot, value) in host.keybinds.iter().zip(config.settings.get().keybinds.bridge_values()) {
@@ -755,8 +817,56 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
             plugin.parking_frame.load(Ordering::Acquire),
             plugin.heartbeat.load(Ordering::Acquire),
         );
-        let mouse = pointer.update(&plugin.pointer, &webview, web, covered);
+        let mouse = pointer.update(&plugin.pointer, &webview, web, covered || head_unit);
         cursor.follow(mouse, Instant::now());
+        // The wheel's buttons: what each is bound to, as a keybind's; and the last pressed, for the companion to bind.
+        let pressed = controllers.take();
+        if !pressed.is_empty() {
+            let bound = config.settings.get().controller;
+            for press in pressed {
+                for (action, button) in &bound {
+                    if button.device != press.device || button.button != press.button {
+                        continue;
+                    }
+                    // Push-to-talk: held, and let go; everything else as it's pressed.
+                    if action == "pushToTalk" {
+                        announcer.wheel_talk(press.down);
+                        continue;
+                    }
+                    if !press.down {
+                        continue;
+                    }
+                    if let Some(slot) = action.strip_prefix("slot").and_then(|n| n.parse::<usize>().ok()) {
+                        announcer.play(slot.saturating_sub(1));
+                    }
+                    if action == "announce" {
+                        let mut settings = config.settings.get();
+                        settings.announce.on = !settings.announce.on;
+                        config.settings.set(settings.clone());
+                        (config.on_settings)(&settings);
+                    }
+                    if CONTROLLER_ACTIONS.contains(&action.as_str()) {
+                        let _ = webview.post_json(&serde_json::json!({ "type": "keybind", "action": action }).to_string());
+                    }
+                }
+                if !press.down {
+                    continue;
+                }
+                controller_presses += 1;
+                status.controller_press = Some(ControllerPress {
+                    device: press.device,
+                    name: press.name,
+                    button: press.button,
+                    count: controller_presses,
+                });
+            }
+            (config.on_status)(&status);
+        }
+        let announced = announcer.status();
+        if status.announce != announced {
+            status.announce = announced;
+            (config.on_status)(&status);
+        }
         // The player's keybinds pressed (and the volume keys held) in the game: the page acts on each.
         for keybind in Keybind::ALL {
             let plugin = &bridge.bridge().plugin;
@@ -856,7 +966,174 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
             music_listing = Some(listing);
         }
 
-        for message in webview.take_page_messages() {
+        if ipad_checked.is_none_or(|at| at.elapsed() >= Duration::from_millis(250)) {
+            ipad_checked = Some(Instant::now());
+            let enabled = config.settings.get().ipad.enabled;
+            if enabled && ipad.is_none() {
+                let folders = vec![
+                    ("maps".to_owned(), maps_dir.clone()),
+                    ("customize".to_owned(), customize_dir.clone()),
+                    ("music-covers".to_owned(), config.data_dir.join("music-covers")),
+                    ("safari-tabs".to_owned(), config.data_dir.join("safari-tabs")),
+                ];
+                match remote::Remote::start(&config.data_dir, ipad_root.clone(), folders) {
+                    Ok(started) => {
+                        let started = Arc::new(started);
+                        let tee = started.clone();
+                        webview.set_tee(Some(Box::new(move |json: &str| tee.post(json))));
+                        ipad = Some(started);
+                    }
+                    Err(e) => log!("iPad: cannot serve on port {}: {e}", remote::PORT),
+                }
+            } else if !enabled && ipad.is_some() {
+                webview.set_tee(None);
+                ipad = None;
+            }
+            let ipad_status = ipad.as_ref().map(|ipad| ipad.status());
+            if ipad_status != status.ipad {
+                status.ipad = ipad_status;
+                (config.on_status)(&status);
+            }
+            match (&ipad, head_unit) {
+                (Some(remote), true) if remote.connected() => {
+                    if pictures.is_none() {
+                        pictures = Some(mirror::encoder(remote.clone()));
+                    }
+                    if mirror_gpu.is_none() {
+                        mirror_gpu = Gpu::new(None).map_err(|e| log!("iPad: no device for the players' pictures: {e}")).ok();
+                    }
+                    if let Some(gpu) = &mirror_gpu {
+                        let mut wanted = Vec::new();
+                        if let Some(visual) = youtube.as_ref().and_then(|youtube| youtube.view().visual().ok()) {
+                            wanted.push((mirror::YOUTUBE, 0, visual));
+                        }
+                        if let Some(visual) = youtube_music.as_ref().and_then(|music| music.view().visual().ok()) {
+                            wanted.push((mirror::YOUTUBE_MUSIC, 0, visual));
+                        }
+                        if let Some((shown, view)) = safari.as_ref().and_then(|safari| safari.shown())
+                            && let Ok(visual) = view.visual()
+                        {
+                            wanted.push((mirror::SAFARI, u64::from(shown.tab), visual));
+                        }
+                        mirrors.retain(|m| wanted.iter().any(|(tag, of, _)| *tag == m.tag && *of == m.of));
+                        for (tag, of, visual) in wanted {
+                            if mirrors.iter().any(|m| m.tag == tag && m.of == of) || mirror_failed.contains(&(tag, of)) {
+                                continue;
+                            }
+                            match mirror::Mirror::start(gpu, &visual, tag, of) {
+                                Ok(started) => mirrors.push(started),
+                                Err(e) => {
+                                    log!("iPad: a player's picture can't be captured: {e}");
+                                    mirror_failed.push((tag, of));
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    mirrors.clear();
+                    mirror_failed.clear();
+                    pictures = None;
+                }
+            }
+            let now_head_unit = ipad.as_ref().is_some_and(|ipad| ipad.head_unit());
+            if now_head_unit != head_unit {
+                head_unit = now_head_unit;
+                log!("iPad: {}", if head_unit { "the head unit" } else { "no longer the head unit" });
+                let _ = webview.post_json(&head_unit_message(head_unit, &truck_view));
+                // The interaction key again, as the head unit has it.
+                applied_settings = None;
+            }
+        }
+        if let (Some(gpu), Some(pictures)) = (&mirror_gpu, &pictures) {
+            for mirror in &mirrors {
+                mirror.step(gpu, pictures);
+            }
+        }
+        let ipad_messages = ipad.as_ref().map(|ipad| ipad.take_messages()).unwrap_or_default();
+        let ipad_messages = ipad_messages.into_iter().filter(|message| {
+            match serde_json::from_str::<serde_json::Value>(message).ok().as_ref().and_then(|m| m["type"].as_str()) {
+                Some("truckView") => {
+                    let view = serde_json::from_str::<serde_json::Value>(message).ok();
+                    if let Some(view) = view.as_ref().and_then(|m| m["view"].as_str())
+                        && matches!(view, "dashboard" | "map" | "game")
+                    {
+                        truck_view = view.to_owned();
+                        let _ = webview.post_json(&head_unit_message(head_unit, &truck_view));
+                    }
+                    false
+                }
+                // What's about the truck's screen itself stays the truck page's.
+                Some(
+                    "cursorArea" | "cursorLight" | "brightness" | "westplay" | "startup" | "typing" | "truckStrip"
+                    | "guidance",
+                ) => false,
+                Some("ready") => {
+                    let _ = webview.post_json(&head_unit_message(head_unit, &truck_view));
+                    true
+                }
+                Some("ipadFps") => {
+                    let fps = serde_json::from_str::<serde_json::Value>(message).ok().and_then(|m| m["fps"].as_u64());
+                    if let (Some(ipad), Some(fps)) = (&ipad, fps) {
+                        ipad.set_fps(fps.min(1000) as u32);
+                    }
+                    false
+                }
+                // A touch on a Safari page the iPad shows: a tap clicks, a drag scrolls.
+                Some("ipadWeb") => {
+                    if let Some(message) = serde_json::from_str::<serde_json::Value>(message).ok()
+                        && let Some((shown, view)) = safari.as_ref().and_then(|safari| safari.shown())
+                    {
+                        let zoom = shown.zoom.max(0.1);
+                        let at = |key: &str, from: f32| (message[key].as_f64().unwrap_or(0.0) - f64::from(from)) / zoom;
+                        let point = (at("x", shown.x), at("y", shown.y));
+                        match message["kind"].as_str() {
+                            Some("down") => ipad_touch = Some((point, point, false)),
+                            Some("move") => {
+                                if let Some((start, last, scrolled)) = &mut ipad_touch {
+                                    let far = (point.0 - start.0).hypot(point.1 - start.1) * zoom > 10.0;
+                                    if *scrolled || far {
+                                        *scrolled = true;
+                                        let event = serde_json::json!({
+                                            "type": "mouseWheel", "x": start.0, "y": start.1,
+                                            "deltaX": last.0 - point.0, "deltaY": last.1 - point.1, "modifiers": 0,
+                                        });
+                                        let _ = view.devtools("Input.dispatchMouseEvent", &event.to_string());
+                                        *last = point;
+                                    }
+                                }
+                            }
+                            Some("up") => {
+                                if let Some((_, _, false)) = ipad_touch {
+                                    for kind in ["mousePressed", "mouseReleased"] {
+                                        let event = serde_json::json!({
+                                            "type": kind, "x": point.0, "y": point.1, "button": "left",
+                                            "buttons": u32::from(kind == "mousePressed"), "clickCount": 1, "modifiers": 0,
+                                        });
+                                        let _ = view.devtools("Input.dispatchMouseEvent", &event.to_string());
+                                    }
+                                }
+                                ipad_touch = None;
+                            }
+                            _ => {}
+                        }
+                    }
+                    false
+                }
+                _ => true,
+            }
+        });
+        // The iPad as the head unit places the players: the truck page's placing them is let go meanwhile.
+        let truck_messages = webview.take_page_messages().into_iter().filter(|message| {
+            if !head_unit {
+                return true;
+            }
+            let Ok(message) = serde_json::from_str::<serde_json::Value>(message) else { return true };
+            let player = matches!(message["type"].as_str(), Some("youtube" | "youtubeMusic" | "safari"));
+            !(player && matches!(message["command"]["action"].as_str(), Some("show" | "hide")))
+        });
+        let page_messages: Vec<String> = truck_messages.chain(ipad_messages).collect();
+        for message in page_messages {
             match parse_page_message(&message) {
                 // The page announces itself when it (re)loads; it missed everything sent before, so send the
                 // current state again (some of it is otherwise only sent when it changes).
@@ -916,6 +1193,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                         let message = safari::Report::Playing(safari_playing).message();
                         let _ = webview.post_json(&message);
                     }
+                    let _ = webview.post_json(&page_state.all_message());
                     let _ = webview.post_json(&settings_message(&config.settings.get()));
                     if let Some(message) = &customize_message {
                         let _ = webview.post_json(message);
@@ -933,6 +1211,16 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     }
                 }
                 Some(PageMessage::Startup { stage }) => startup::mark(&format!("page: {stage}")),
+                Some(PageMessage::PageState { key, value }) => {
+                    if let Some(message) = page_state.set(&key, value.as_deref()) {
+                        let _ = webview.post_json(&message);
+                    }
+                }
+                Some(PageMessage::PageStateImport { values }) => {
+                    if let Some(message) = page_state.import(values) {
+                        let _ = webview.post_json(&message);
+                    }
+                }
                 Some(PageMessage::Guidance { line }) => log!("route: the cab's guidance, {line}"),
                 Some(PageMessage::TruckStrip { strip }) => {
                     let mut settings = config.settings.get();
@@ -959,7 +1247,8 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                 Some(PageMessage::Equalizer { equalizer: curve, custom }) => {
                     let mut settings = config.settings.get();
                     // The cab's tone only: the companion's coach choice kept.
-                    let sound = settings::SoundSettings { equalizer: curve.clamped(), custom, ..settings.sound };
+                    let curve = speakers::Equalizer { wear: 0, ..curve.clamped() };
+                    let sound = settings::SoundSettings { equalizer: curve, custom, ..settings.sound };
                     equalizer = sound.playing();
                     if settings.sound != sound {
                         settings.sound = sound;
@@ -1746,7 +2035,9 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     place_page(layout, last_truck.as_ref(), &mut page_place, &stage, &webview, &mut pointer);
                 }
                 coach_sets = speakers::coach(truck.id.as_str(), truck.axles).map(|coach| {
-                    let sets = (coach.driver_speakers(truck.head), coach.passenger_speakers(truck.head));
+                    // The passengers' units merged into a few sources: one each, a 3D sound each, took the game's frames.
+                    let passengers = speakers::merged(&coach.passenger_speakers(truck.head), truck.head, 3);
+                    let sets = (coach.driver_speakers(truck.head), passengers);
                     log!(
                         "speakers: {} ({}), {} axles: coach {}, the driver's {}, the passengers' {}",
                         truck.id.as_str(),
@@ -1758,6 +2049,9 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     );
                     sets
                 });
+                announcer.set_taps(
+                    coach_sets.as_ref().map(|(_, passengers)| announce::taps(passengers, truck.head)).unwrap_or_default(),
+                );
                 if coach_sets.is_none() && speakers::is_coach(truck.id.as_str()) {
                     let (id, plate) = (truck.id.as_str(), truck.plate.as_str());
                     log!("speakers: {id} ({plate}): no coach body on {} axles", truck.axles);
@@ -1908,6 +2202,21 @@ fn log_startup(bridge: &BridgeMapping, pipeline: Option<&Pipeline>, screen_frame
 }
 
 /// Whether `window` (its handle) is the one in front, as Windows says.
+/// The coach's PA, once the host has started it (the companion's commands reach it here).
+static ANNOUNCER: std::sync::OnceLock<announce::Announcer> = std::sync::OnceLock::new();
+
+/// An announcement slot's button in the companion: `record` (again: stop and keep), `play` (again: stop), `clear`,
+/// anything else stops what's playing or recording.
+pub fn announce_slot(slot: usize, action: &str) {
+    let Some(announcer) = ANNOUNCER.get() else { return };
+    match action {
+        "record" => announcer.record(slot),
+        "play" => announcer.play(slot),
+        "clear" => announcer.clear(slot),
+        _ => announcer.stop(),
+    }
+}
+
 pub fn in_front(window: isize) -> bool {
     use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
     // SAFETY: a plain question, with nothing passed.
@@ -2063,6 +2372,12 @@ fn nearby_message(nearby: Option<&westplay_shared::Nearby>) -> String {
 }
 
 /// `{"type":"cursor","host":…}`: whether the host draws the screen's cursor (`cursor`), or the page draws its own.
+/// `{"type":"headUnit","on":true,"view":"dashboard"}`: whether the iPad is the head unit, and what the truck's screen
+/// shows meanwhile (`dashboard`, `map`, or `game`: the truck's own screen).
+fn head_unit_message(on: bool, view: &str) -> String {
+    serde_json::json!({ "type": "headUnit", "on": on, "view": view }).to_string()
+}
+
 fn cursor_message(host: bool) -> String {
     serde_json::json!({ "type": "cursor", "host": host }).to_string()
 }
@@ -2444,6 +2759,10 @@ enum PageMessage {
     /// What stopping at each of these map nodes (uids in hex) would add to the trip the game's route makes
     /// (`planner`); `{"type":"detours"}` comes back with `id`.
     Detours { id: u32, nodes: Vec<String> },
+    /// A part of what the page keeps (`page_state`), by its storage key, changed (`None`: forgotten).
+    PageState { key: String, value: Option<String> },
+    /// What the page kept itself, handed over once when WestPlay keeps nothing yet (`page_state`).
+    PageStateImport { values: std::collections::BTreeMap<String, String> },
 }
 
 /// A route being handed to the game's GPS: the page's request, the hand-over (the route picked and the
@@ -2728,7 +3047,7 @@ mod tests {
         assert_eq!(
             parse_page_message(r#"{"type":"equalizer","bass":-3,"mid":0,"treble":2,"custom":true}"#),
             Some(PageMessage::Equalizer {
-                equalizer: crate::speakers::Equalizer { bass: -3, mid: 0, treble: 2 },
+                equalizer: crate::speakers::Equalizer { bass: -3, mid: 0, treble: 2, wear: 0 },
                 custom: true
             })
         );
@@ -2736,7 +3055,7 @@ mod tests {
         assert_eq!(
             parse_page_message(r#"{"type":"equalizer","bass":4}"#),
             Some(PageMessage::Equalizer {
-                equalizer: crate::speakers::Equalizer { bass: 4, mid: 0, treble: 0 },
+                equalizer: crate::speakers::Equalizer { bass: 4, mid: 0, treble: 0, wear: 0 },
                 custom: false
             })
         );
@@ -2903,7 +3222,7 @@ mod tests {
             })
         );
         settings.screen.truck_strip = crate::settings::TruckStrip::Off;
-        settings.sound.equalizer = crate::speakers::Equalizer { bass: -9, mid: 2, treble: 6 };
+        settings.sound.equalizer = crate::speakers::Equalizer { bass: -9, mid: 2, treble: 6, wear: 0 };
         settings.look.wallpaper = Some("custom:Dusk".into());
         settings.look.icon_set = Some("Retro".into());
         settings.language = crate::settings::LanguageCode::new("de_de");
@@ -2917,7 +3236,7 @@ mod tests {
         // The curve is kept whichever is chosen; what plays is it, with Custom only.
         assert_eq!(settings.sound.playing(), crate::speakers::Equalizer::default());
         settings.sound.custom = true;
-        assert_eq!(settings.sound.playing(), crate::speakers::Equalizer { bass: -6, mid: 2, treble: 6 });
+        assert_eq!(settings.sound.playing(), crate::speakers::Equalizer { bass: -6, mid: 2, treble: 6, wear: 0 });
     }
 
     #[test]

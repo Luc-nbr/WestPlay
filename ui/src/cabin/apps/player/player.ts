@@ -1,3 +1,4 @@
+import { hostFiles } from '../../../shared/ipad'
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import {
@@ -42,7 +43,7 @@ export const usePlayer = create<PlayerState>(() => ({
 }))
 
 /** Where the songs' covers are served (the host's `music_folder::COVERS_HOST`). */
-const COVERS = 'https://westplay.music-covers/'
+const COVERS = `${hostFiles('music-covers')}/`
 
 /** A song's cover, or `null` without one. */
 export function coverOf(song: PlayerSong | null | undefined): string | null {
@@ -81,7 +82,10 @@ export function currentSong(state: Pick<PlayerState, 'songs' | 'playback'>): Pla
 export function useCurrentSong(): PlayerSong | null {
   const songs = usePlayer((state) => state.songs)
   const file = usePlayer((state) => state.playback?.file ?? null)
-  return useMemo(() => (file ? currentSong({ songs, playback: { file } as PlayerState['playback'] }) : null), [songs, file])
+  return useMemo(
+    () => (file ? currentSong({ songs, playback: { file } as PlayerState['playback'] }) : null),
+    [songs, file],
+  )
 }
 
 /** Where the song is now (seconds): the time runs on from what the host said while it plays. */

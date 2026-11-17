@@ -132,6 +132,12 @@ const SUPPORT_PAGE: &str = "https://kreosus.com/enes-less";
 
 /// Opens the support page (Support me) in the player's browser. The address is fixed here, so the companion
 /// can't open any other.
+/// An announcement slot's button: record, play, clear or stop (`westplay_host::announce_slot`).
+#[tauri::command]
+fn announce_slot(slot: usize, action: String) {
+    westplay_host::announce_slot(slot, &action);
+}
+
 #[tauri::command]
 fn open_support_page() {
     westplay_host::browser::open(SUPPORT_PAGE);
@@ -224,6 +230,7 @@ fn main() {
             apple_music_sign_out,
             apple_music_check,
             open_support_page,
+            announce_slot,
             open_social,
             app_log_place,
             customize::customize_list,
@@ -419,8 +426,8 @@ fn start_host(
                 Ended::Failed(error) => error,
             };
             // In the log too: shown only, a player's said nothing of it (2026-11-11).
-            westplay_host::log!("WestPlay engine stopped: {error}");
-            let status = Status { error: Some(format!("WestPlay engine stopped: {error}")), ..Default::default() };
+            westplay_host::log!("Dashly engine stopped: {error}");
+            let status = Status { error: Some(format!("Dashly engine stopped: {error}")), ..Default::default() };
             let _ = events.emit("host-status", &status);
             return;
         }

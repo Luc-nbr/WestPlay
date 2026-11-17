@@ -5,15 +5,15 @@ import { words as spain } from './es_es'
  * for what just happened, "computadora", "mouse", "presionar", "agregar", "videos", "en vivo", "clima"). */
 export const words: CompanionWords = {
   ...spain,
-  state: { ...spain.state, stopped: 'WestPlay se detuvo' },
+  state: { ...spain.state, stopped: 'Dashly se detuvo' },
   screen: {
     ...spain.screen,
     titles: { ...spain.screen.titles, stopped: 'Algo falló' },
     subs: {
       ...spain.screen.subs,
-      stopped: 'El servicio de WestPlay se detuvo. Tienes los detalles en Información.',
+      stopped: 'El servicio de Dashly se detuvo. Tienes los detalles en Información.',
     },
-    gpuNote: 'Si la pantalla se traba, elige otra tarjeta: WestPlay se reinicia en ella.',
+    gpuNote: 'Si la pantalla se traba, elige otra tarjeta: Dashly se reinicia en ella.',
     coachSpeakers: 'Altavoces del autobús',
     coachNote:
       'Altavoces de los pasajeros de este autobús: {n}, todos a la vez. Con un procesador poco potente, el juego puede trabarse.',
@@ -21,7 +21,7 @@ export const words: CompanionWords = {
       'En un autobús, los altavoces de los pasajeros suenan todos a la vez. Con un procesador poco potente, el juego puede trabarse.',
     elevated: {
       ...spain.screen.elevated,
-      text: 'Así WestPlay no puede leer su ruta, sus indicaciones ni el clima. Inicia el juego de forma normal, no como administrador.',
+      text: 'Así Dashly no puede leer su ruta, sus indicaciones ni el clima. Inicia el juego de forma normal, no como administrador.',
     },
   },
   controls: {
@@ -37,7 +37,7 @@ export const words: CompanionWords = {
   },
   accounts: {
     ...spain.accounts,
-    sub: 'Inicia sesión para tener tu música y tus videos en la pantalla del camión. Cada servicio tiene su propia ventana de inicio de sesión, y WestPlay nunca ve los datos de tus cuentas.',
+    sub: 'Inicia sesión para tener tu música y tus videos en la pantalla del camión. Cada servicio tiene su propia ventana de inicio de sesión, y Dashly nunca ve los datos de tus cuentas.',
   },
   map: {
     ...spain.map,
@@ -72,18 +72,21 @@ export const words: CompanionWords = {
     tour: {
       ...spain.tutorial.tour,
       controls: 'Cambia la tecla que mantienes presionada y la velocidad del puntero.',
+      wheel: "Put the music, volume, brightness and announcements on your wheel or button box.",
+      announce: "Speak through the bus speakers live or with push-to-talk, and record announcements to play back.",
+      audio: "Choose the driver, devices and buffer, and how worn the speakers sound.",
       customize: 'Agrega tus propios fondos de pantalla e iconos de apps, y elige cuáles se muestran.',
     },
   },
   uninstall: {
     ...spain.uninstall,
-    text: 'WestPlay se quitará del juego y de tus perfiles, y se eliminará de esta computadora junto con tus inicios de sesión y sus registros.',
+    text: 'Dashly se quitará del juego y de tus perfiles, y se eliminará de esta computadora junto con tus inicios de sesión y sus registros.',
     closeGame: { ...spain.uninstall.closeGame, title: 'Primero cierra el juego.' },
-    steps: { ...spain.uninstall.steps, data: 'Eliminando WestPlay de esta computadora' },
+    steps: { ...spain.uninstall.steps, data: 'Eliminando Dashly de esta computadora' },
     profilesFailed:
-      'No se pudieron cambiar {n} de tus perfiles, que todavía incluyen WestPlay. Quítalo de ellos en el Gestor de mods.',
+      'No se pudieron cambiar {n} de tus perfiles, que todavía incluyen Dashly. Quítalo de ellos en el Gestor de mods.',
   },
-  about: { ...spain.about, sub: 'Datos en vivo de WestPlay y del juego, por si algo no va bien.' },
+  about: { ...spain.about, sub: 'Datos en vivo de Dashly y del juego, por si algo no va bien.' },
   customize: {
     ...spain.customize,
     add: 'Agregar',

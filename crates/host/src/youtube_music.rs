@@ -846,6 +846,11 @@ pub struct YouTubeMusic {
 }
 
 impl YouTubeMusic {
+    /// Its browser (its picture mirrored to the iPad: `mirror`).
+    pub fn view(&self) -> &OffscreenWebView {
+        &self.view
+    }
+
     /// Opens YouTube Music's web player in a WebView of `stage`'s frame (`width` x `height`), hidden under the
     /// cabin page, on `user_data`'s profile (the cabin page's, which YouTube's shares).
     pub fn start(stage: &Stage, width: u32, height: u32, user_data: &Path) -> Result<Self, webview::Error> {

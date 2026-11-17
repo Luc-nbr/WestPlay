@@ -1,3 +1,5 @@
+// First: on an iPad, its connection to WestPlay stands in for WebView2's before anything asks for it.
+import './ipadBoot'
 import '@fontsource-variable/instrument-sans'
 import '@fontsource-variable/inter'
 // The YouTube app's type, as YouTube's own.

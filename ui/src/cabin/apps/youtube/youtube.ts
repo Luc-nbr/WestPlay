@@ -1,3 +1,4 @@
+import { onSharedChange, sharedStorage } from '../../state/sharedStorage'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import {
@@ -134,7 +135,7 @@ export const useYouTube = create<YouTubeStore>()(
     {
       name: 'westplay.youtube',
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sharedStorage),
       partialize: (store) => ({
         searches: store.searches,
         watched: store.watched,
@@ -571,3 +572,5 @@ export function seekBy(seconds: number): void {
 export function forgetSearch(query: string): void {
   useYouTube.setState((store) => ({ searches: store.searches.filter((s) => s !== query) }))
 }
+
+onSharedChange('westplay.youtube', () => useYouTube.persist.rehydrate())

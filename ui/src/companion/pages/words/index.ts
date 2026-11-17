@@ -34,6 +34,16 @@ export interface CompanionWords {
     noGame: string
   }
   screen: {
+    ipad: string
+    ipadUse: string
+    ipadDetail: string
+    ipadScan: string
+    ipadScanDetail: string
+    ipadAddress: string
+    ipadCode: string
+    ipadConnected: string
+    ipadWaiting: string
+    ipadNote: string
     titles: {
       starting: string
       stopped: string
@@ -120,6 +130,58 @@ export interface CompanionWords {
     /** `{key}`: the screen's key. */
     keybindsNote: string
     /** `{action}`: what the key is taken for. */
+    nextTrack: string
+    previousTrack: string
+    wheelButtons: string
+    wheelButton: string
+    wheelNone: string
+    wheelChoose: string
+    wheelPress: string
+    wheelClear: string
+    announce: string
+    announceOn: string
+    announceDetail: string
+    announceVolume: string
+    announceNote: string
+    slots: string
+    slot: string
+    playSlot: string
+    slotEmpty: string
+    recordingNow: string
+    record: string
+    stopRecording: string
+    play: string
+    stopPlaying: string
+    announceQuality: string
+    announceQualityDetail: string
+    qualityOld: string
+    qualityUsed: string
+    qualityNew: string
+    musicSpeakers: string
+    pushToTalk: string
+    pushToTalkDetail: string
+    talkingNow: string
+    audio: string
+    audioDriver: string
+    audioExclusive: string
+    audioInput: string
+    audioOutput: string
+    audioDefault: string
+    asioDriver: string
+    asioNone: string
+    audioBuffer: string
+    audioBufferDetail: string
+    audioLatency: string
+    audioLatencyDetail: string
+    audioIdle: string
+    audioNote: string
+    streamCopy: string
+    streamCopyDetail: string
+    streamOutput: string
+    wheelSub: string
+    announceSub: string
+    audioSub: string
+    wheelNote: string
     inUse: string
   }
   accounts: {
@@ -294,7 +356,18 @@ export interface TutorialWords {
   finish: string
 }
 
-export type SectionId = 'screen' | 'controls' | 'customize' | 'accounts' | 'map' | 'setup' | 'about' | 'support'
+export type SectionId =
+  | 'screen'
+  | 'controls'
+  | 'wheel'
+  | 'announce'
+  | 'audio'
+  | 'customize'
+  | 'accounts'
+  | 'map'
+  | 'setup'
+  | 'about'
+  | 'support'
 
 const WORDS: Record<string, CompanionWords> = Object.fromEntries(
   Object.entries(import.meta.glob<CompanionWords>('./[a-z][a-z]_[a-z][a-z].ts', { eager: true, import: 'words' })).map(

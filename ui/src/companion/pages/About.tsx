@@ -92,7 +92,7 @@ export function About({ status, setup, cw, update, showUpdate }: PageProps) {
 /** The report to copy: plain facts, in English (for whoever helps), nothing of the player's accounts. */
 function report(version: string, status: HostStatus | null, games: GameInfo[], appLog: string | null): string {
   return [
-    `WestPlay ${version}`,
+    `Dashly ${version}`,
     ...(games.length
       ? games.map((game) => `Game: ${GAME_NAMES[game.kind]} ${game.version ?? 'unknown'} (${game.dir})`)
       : ['Game: none set up']),

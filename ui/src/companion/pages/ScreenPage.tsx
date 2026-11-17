@@ -1,3 +1,4 @@
+import qrcode from 'qrcode-generator'
 import { GAME_KINDS, GAME_NAMES } from '../setup'
 import { setWestplayOpen } from '../useHostStatus'
 import { Group, Note, Panel, Row, Status, Switch, Tick } from '../room/parts'
@@ -93,6 +94,7 @@ export function ScreenPage({ status, settings, setup, cw }: PageProps) {
           <b>{w.elevated.title}</b> {w.elevated.text}
         </Note>
       )}
+      <IpadGroup status={status} settings={settings} cw={cw} />
       <GpuChooser status={status} settings={settings} cw={cw} />
       <CoachChooser status={status} settings={settings} cw={cw} />
       {status?.error && <Note tone="bad">{status.error}</Note>}
@@ -176,4 +178,49 @@ function CoachChooser({ status, settings: state, cw }: Pick<PageProps, 'status' 
       </Note>
     </>
   )
+}
+
+/** The iPad as the screen: switched on here, then opened in Safari on the iPad at the address shown, paired with the
+ * code. While it's connected it's the head unit (westplay_host::remote). */
+function IpadGroup({ status, settings: state, cw }: Pick<PageProps, 'status' | 'settings' | 'cw'>) {
+  const w = cw.screen
+  const { settings, update } = state
+  if (!settings) return null
+  const on = settings.ipad?.enabled ?? false
+  const ipad = status?.ipad ?? null
+  return (
+    <>
+      <Group title={w.ipad} place={6}>
+        <Row
+          title={w.ipadUse}
+          detail={w.ipadDetail}
+          accessory={
+            <Switch on={on} label={w.ipadUse} change={(enabled) => void update({ ...settings, ipad: { enabled } })} />
+          }
+        />
+        {on && ipad && (
+          <>
+            <Row title={w.ipadScan} detail={w.ipadScanDetail} accessory={<QrCode text={ipad.link} />} />
+            <Row title={w.ipadAddress} value={ipad.address} />
+            <Row title={w.ipadCode} value={ipad.code} />
+            <Row
+              title={ipad.connected ? w.ipadConnected : w.ipadWaiting}
+              value={ipad.connected && ipad.fps !== null ? `${ipad.fps} fps` : undefined}
+              accessory={<Status tone={ipad.connected ? 'good' : 'busy'} />}
+            />
+          </>
+        )}
+      </Group>
+      {on && <Note tone="calm">{w.ipadNote}</Note>}
+    </>
+  )
+}
+
+/** The iPad's link as a QR code: the iPad's camera opens it, and it's paired at once. */
+function QrCode({ text }: { text: string }) {
+  const code = qrcode(0, 'M')
+  code.addData(text)
+  code.make()
+  const src = `data:image/svg+xml;utf8,${encodeURIComponent(code.createSvgTag({ cellSize: 4, margin: 2, scalable: true }))}`
+  return <img src={src} alt={text} width={150} height={150} style={{ background: '#fff', borderRadius: 8 }} />
 }

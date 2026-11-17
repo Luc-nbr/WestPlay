@@ -1,3 +1,4 @@
+import { onSharedChange, sharedStorage } from '../state/sharedStorage'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import type { Destination } from './places'
@@ -24,7 +25,7 @@ export const useRecents = create<Recents>()(
     {
       name: 'westplay.recents',
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sharedStorage),
       partialize: (state) => ({ places: state.places }),
       // Stored by an earlier WestPlay (or edited): keep only what reads as a place.
       merge: (stored, current) => ({ ...current, places: validPlaces((stored as { places?: unknown })?.places) }),
@@ -46,3 +47,5 @@ function validPlaces(places: unknown): Destination[] {
     )
     .slice(0, RECENTS)
 }
+
+onSharedChange('westplay.recents', () => useRecents.persist.rehydrate())

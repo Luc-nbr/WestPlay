@@ -1,6 +1,15 @@
 import type { Strings } from '.'
 
-const FRENCH_ORDINALS = ['première', 'deuxième', 'troisième', 'quatrième', 'cinquième', 'sixième', 'septième', 'huitième']
+const FRENCH_ORDINALS = [
+  'première',
+  'deuxième',
+  'troisième',
+  'quatrième',
+  'cinquième',
+  'sixième',
+  'septième',
+  'huitième',
+]
 
 /** `one` or `other` by French plural rules (0 and 1 are singular). */
 const plural = (n: number, one: string, other: string) =>
@@ -89,7 +98,7 @@ export const strings: Strings = {
     onJob: 'Pendant une livraison, la destination est celle du chargement',
     noAnswer: 'Le jeu n’a pas répondu',
     elevated:
-      'Le jeu est lancé en tant qu’administrateur : WestPlay ne peut pas voir son itinéraire. Lancez-le normalement',
+      'Le jeu est lancé en tant qu’administrateur : Dashly ne peut pas voir son itinéraire. Lancez-le normalement',
     unsupported: 'Cette version du jeu n’est pas encore prise en charge',
     failed: 'Le jeu n’a pas trouvé d’itinéraire jusque-là',
   },
@@ -350,8 +359,7 @@ export const strings: Strings = {
       '-updated': 'Date de mise à jour',
       type: 'Type de playlist',
     },
-    finishOnPc:
-      'Terminez la connexion sur votre PC : la fenêtre de connexion Apple Music est ouverte sur le bureau.',
+    finishOnPc: 'Terminez la connexion sur votre PC : la fenêtre de connexion Apple Music est ouverte sur le bureau.',
     homePitch: {
       title: 'Profitez pleinement d’Apple Music',
       text: 'Connectez-vous pour retrouver des suggestions faites pour vous, vos écoutes récentes et votre bibliothèque.',
@@ -468,16 +476,17 @@ export const strings: Strings = {
       'Sombre la nuit et dès que les phares sont allumés, comme le fait le capteur de luminosité du camion.',
     vehicleBar: 'Barre du véhicule',
     vehicleBarFooter:
-      'La barre d’informations du camion, à côté de WestPlay. Désactivée, WestPlay occupe tout l’écran.',
+      'La barre d’informations du camion, à côté de Dashly. Désactivée, Dashly occupe tout l’écran.',
     textSize: 'Taille du texte',
     reduceTransparency: 'Réduire la transparence',
     brightness: 'Luminosité',
-    textSizeAbout: 'Les apps de WestPlay s’adapteront à la taille de lecture que vous choisissez ci-dessous.',
+    textSizeAbout: 'Les apps de Dashly s’adapteront à la taille de lecture que vous choisissez ci-dessous.',
     wallpaper: 'Fond d’écran',
     dashboard: 'Tableau de bord',
     widgets: 'Widgets',
     mapWhileDriving: 'Plan en plein écran en conduisant',
-    mapWhileDrivingFooter: 'Pendant que vous conduisez, le plan occupe tout le tableau de bord si vous n’avez pas touché l’écran depuis 30 secondes.',
+    mapWhileDrivingFooter:
+      'Pendant que vous conduisez, le plan occupe tout le tableau de bord si vous n’avez pas touché l’écran depuis 30 secondes.',
     showAlbumArt: 'Afficher les pochettes',
     dateTime: 'Date et heure',
     hours24: 'Format 24 h',
@@ -486,7 +495,7 @@ export const strings: Strings = {
     recommended: 'Recommandé',
     custom: 'Personnalisé',
     equalizerFooter:
-      'WestPlay diffuse la musique par les haut-parleurs de chaque camion, réglés pour sa cabine. Si vous préférez un autre son, vous pouvez régler le rendu de toutes les apps de musique, dans tous les camions.',
+      'Dashly diffuse la musique par les haut-parleurs de chaque camion, réglés pour sa cabine. Si vous préférez un autre son, vous pouvez régler le rendu de toutes les apps de musique, dans tous les camions.',
     low: 'Graves',
     mid: 'Médiums',
     high: 'Aigus',
@@ -561,7 +570,7 @@ export const strings: Strings = {
       'Safari ne parvient pas à ouvrir la page car Safari ne parvient pas à établir une connexion sécurisée avec le serveur.',
     couldNotOpen: 'Safari ne parvient pas à ouvrir la page.',
     tryAgain: 'Réessayer',
-    noDownloads: 'Safari dans WestPlay ne télécharge pas de fichiers.',
+    noDownloads: 'Safari dans Dashly ne télécharge pas de fichiers.',
     searchEngine: 'Moteur de recherche',
     tabs: 'Onglets',
     separateTabBar: 'Barre d’onglets séparée',

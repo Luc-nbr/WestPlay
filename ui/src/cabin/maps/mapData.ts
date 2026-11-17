@@ -1,3 +1,4 @@
+import { hostFiles } from '../../shared/ipad'
 import { useEffect, useState } from 'react'
 import { create } from 'zustand'
 import { isInHost } from '../../shared/host'
@@ -13,7 +14,7 @@ import { loadSeaTiles, seaTilesUrl } from './seaTiles'
  * A plain browser (development) has the map exported into public/dev-map/ (git-ignored, never shipped).
  */
 const DEV_MAP = '/dev-map'
-const MAPS = 'https://westplay.maps'
+const MAPS = hostFiles('maps')
 
 export interface MapLabel {
   /** The place's own name, in its own language and script. */

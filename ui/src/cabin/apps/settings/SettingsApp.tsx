@@ -1,3 +1,4 @@
+import { IS_IPAD, setTruckView, truckView, type TruckView } from '../../../shared/ipad'
 import { type CSSProperties, type PointerEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { NoteGlyph, PauseGlyph, PlayGlyph } from '../music/glyphs'
 import { useNowPlayingTrack } from '../../dashboard/useNowPlaying'
@@ -104,6 +105,7 @@ function ListPage() {
   const wanted = useWantedAppearance()
   return (
     <Page title={text.apps.settings} list>
+      {IS_IPAD && <TruckViewGroup />}
       <Group>
         <NavRow
           tile="var(--apple-blue)"
@@ -604,6 +606,26 @@ function EqualizerPage() {
 }
 
 /** A row picked from those in its card, a blue tick on the one picked. */
+/** On the iPad (the head unit): what the truck's screen shows meanwhile. */
+function TruckViewGroup() {
+  const [view, setView] = useState<TruckView>(truckView)
+  const dutch = navigator.language.toLowerCase().startsWith('nl')
+  const names: Record<TruckView, string> = dutch
+    ? { dashboard: 'Dashboard', map: 'Kaart', game: 'Scherm van de truck' }
+    : { dashboard: 'Dashboard', map: 'Map', game: 'The truck’s own screen' }
+  const pick = (next: TruckView) => {
+    setView(next)
+    setTruckView(next)
+  }
+  return (
+    <Group header={dutch ? 'Vrachtwagenscherm' : 'Truck screen'}>
+      {(['dashboard', 'map', 'game'] as const).map((option) => (
+        <CheckRow key={option} label={names[option]} on={view === option} onPick={() => pick(option)} />
+      ))}
+    </Group>
+  )
+}
+
 function CheckRow({ label, on, onPick }: { label: string; on: boolean; onPick: () => void }) {
   return (
     <button type="button" role="radio" aria-checked={on} className="settings-row" onClick={onPick}>

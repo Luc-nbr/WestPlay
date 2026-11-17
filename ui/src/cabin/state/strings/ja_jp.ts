@@ -86,7 +86,7 @@ export const strings: Strings = {
     onJob: '配送中は、目的地は配送先になります',
     noAnswer: 'ゲームから応答がありません',
     elevated:
-      'ゲームが管理者として実行されているため、WestPlayはルートを読み取れません。ゲームを通常どおり起動してください',
+      'ゲームが管理者として実行されているため、Dashlyはルートを読み取れません。ゲームを通常どおり起動してください',
     unsupported: 'このバージョンのゲームにはまだ対応していません',
     failed: 'ゲームはそこまでのルートを作れませんでした',
   },
@@ -255,11 +255,15 @@ export const strings: Strings = {
     logOut: 'ログアウト',
     account: 'アカウント',
     previewTitle: 'Spotifyのプレビュー',
-    previewText: '登録すると、ときどき広告が入る形で曲やポッドキャストを無制限に楽しめます。クレジットカードは不要です。',
+    previewText:
+      '登録すると、ときどき広告が入る形で曲やポッドキャストを無制限に楽しめます。クレジットカードは不要です。',
     signUpFree: '無料で登録する',
     prompts: {
       play: { title: '無料のSpotifyアカウントで聴き始めよう', text: '' },
-      save: { title: 'マイライブラリに保存', text: 'ログインすると、曲、アルバム、プレイリスト、アーティストを保存できます。' },
+      save: {
+        title: 'マイライブラリに保存',
+        text: 'ログインすると、曲、アルバム、プレイリスト、アーティストを保存できます。',
+      },
       playlist: { title: 'プレイリストを作成', text: 'ログインすると、プレイリストを作成してシェアできます。' },
     },
     haveAccount: 'アカウントをお持ちですか？',
@@ -340,7 +344,8 @@ export const strings: Strings = {
       '-updated': '更新日',
       type: 'プレイリストの種類',
     },
-    finishOnPc: 'PCでサインインを完了してください。Apple Musicのサインイン画面がデスクトップのウィンドウで開いています。',
+    finishOnPc:
+      'PCでサインインを完了してください。Apple Musicのサインイン画面がデスクトップのウィンドウで開いています。',
     homePitch: {
       title: 'Apple Musicをもっと楽しもう',
       text: 'サインインすると、あなたへのおすすめ、最近再生した音楽、ライブラリが表示されます。',
@@ -455,11 +460,12 @@ export const strings: Strings = {
     automatic: '自動',
     automaticFooter: '夜間とヘッドライトの点灯中はダークになります。トラックの光センサーと同じ仕組みです。',
     vehicleBar: '車両バー',
-    vehicleBarFooter: 'WestPlayの横に表示されるトラックの情報バーです。オフにすると、WestPlayが画面全体に表示されます。',
+    vehicleBarFooter:
+      'Dashlyの横に表示されるトラックの情報バーです。オフにすると、Dashlyが画面全体に表示されます。',
     textSize: 'テキストサイズ',
     reduceTransparency: '透明度を下げる',
     brightness: '明るさ',
-    textSizeAbout: 'WestPlayのAppは、下で選んだ文字サイズに調整されます。',
+    textSizeAbout: 'DashlyのAppは、下で選んだ文字サイズに調整されます。',
     wallpaper: '壁紙',
     dashboard: 'ダッシュボード',
     widgets: 'ウィジェット',
@@ -473,7 +479,7 @@ export const strings: Strings = {
     recommended: 'おすすめ',
     custom: 'カスタム',
     equalizerFooter:
-      'WestPlayは、トラックごとのスピーカーで、そのキャビンに合わせて調整した音で音楽を再生します。別の音が好みなら、すべての音楽Appの音をここで調整できます。設定はすべてのトラックに適用されます。',
+      'Dashlyは、トラックごとのスピーカーで、そのキャビンに合わせて調整した音で音楽を再生します。別の音が好みなら、すべての音楽Appの音をここで調整できます。設定はすべてのトラックに適用されます。',
     low: '低音',
     mid: '中音',
     high: '高音',
@@ -547,7 +553,7 @@ export const strings: Strings = {
     notSecureConnection: 'Safariはサーバへの安全な接続を確立できないため、ページを開けません。',
     couldNotOpen: 'Safariはページを開けません。',
     tryAgain: '再試行',
-    noDownloads: 'WestPlayのSafariではファイルをダウンロードできません。',
+    noDownloads: 'DashlyのSafariではファイルをダウンロードできません。',
     searchEngine: '検索エンジン',
     tabs: 'タブ',
     separateTabBar: '独立したタブバー',

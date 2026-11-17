@@ -35,6 +35,15 @@ pub struct Settings {
     pub sound: SoundSettings,
     #[serde(deserialize_with = "lenient")]
     pub map: MapSettings,
+    #[serde(deserialize_with = "lenient")]
+    pub ipad: IpadSettings,
+    /// The wheel's (any game controller's) buttons bound to what the keybinds do, by the action's name
+    /// (`volumeUp`, `nextTrack`…: `controller`).
+    #[serde(deserialize_with = "lenient")]
+    pub controller: std::collections::BTreeMap<String, ControllerButton>,
+    /// The microphone live through the coach's speakers (`announce`).
+    #[serde(deserialize_with = "lenient")]
+    pub announce: AnnounceSettings,
     /// The language WestPlay speaks, in the cab and the companion (the companion's Setup page): one of the
     /// game's, by its code (`tr_tr`), or `None`: the game's own (owner 2026-11-03).
     #[serde(deserialize_with = "lenient")]
@@ -64,6 +73,81 @@ impl<'de> Deserialize<'de> for LanguageCode {
         let code = String::deserialize(deserializer)?;
         Self::new(&code).ok_or_else(|| serde::de::Error::custom(format!("not a language: {code}")))
     }
+}
+
+/// A controller's button: the controller by its USB vendor:product (`346e:0004`), its name, and the button (1 = the
+/// first).
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ControllerButton {
+    pub device: String,
+    pub name: String,
+    pub button: u32,
+}
+
+/// The coach's PA (`announce`): the microphone on (the companion's switch, or a wheel button), and how loud.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AnnounceSettings {
+    pub on: bool,
+    pub volume: u32,
+    /// The bus's speakers: 0 worn-out old ones (thin, crackling, hissing), 100 new.
+    pub quality: u32,
+    /// Push-to-talk on the keyboard (or the mouse): the microphone heard while it's held.
+    pub ptt_key: Option<KeyCode>,
+    /// The audio, as a DAW's: the driver, the devices (by their Windows ids; `None`: Windows' default), the ASIO
+    /// driver and its input and first output channel (0 = the first), and the buffer (frames).
+    pub driver: AudioDriver,
+    pub input: Option<String>,
+    pub output: Option<String>,
+    pub asio_driver: Option<String>,
+    pub asio_input: u32,
+    pub asio_output: u32,
+    pub buffer: u32,
+    /// With ASIO, the sound played on a Windows output too (`stream_output`; `None`: Windows' default), for what
+    /// captures Windows' sound (Discord sharing the screen, OBS) to have it: ASIO's never passes through Windows.
+    pub stream_copy: bool,
+    pub stream_output: Option<String>,
+}
+
+impl Default for AnnounceSettings {
+    fn default() -> Self {
+        Self {
+            on: false,
+            volume: 80,
+            quality: 60,
+            ptt_key: None,
+            driver: AudioDriver::Wasapi,
+            input: None,
+            output: None,
+            asio_driver: None,
+            asio_input: 0,
+            asio_output: 0,
+            buffer: 128,
+            stream_copy: false,
+            stream_output: None,
+        }
+    }
+}
+
+/// How the announcements reach the audio (`announce`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AudioDriver {
+    /// Shared with every app.
+    #[default]
+    Wasapi,
+    /// The microphone WestPlay's alone (the speakers shared: the game plays on them too).
+    Exclusive,
+    Asio,
+}
+
+/// The iPad (`remote`): WestPlay served on the local network for an iPad to be the screen. Off unless the player
+/// switches it on (the companion's Truck Screen page).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct IpadSettings {
+    pub enabled: bool,
 }
 
 /// The cab's map (the companion's Map page): whether its buildings rise from it, and its bridges and ramps; and
@@ -100,6 +184,9 @@ pub struct SoundSettings {
     /// Which of a coach's speakers play (the companion's Truck Screen page).
     #[serde(deserialize_with = "lenient")]
     pub coach: CoachSpeakers,
+    /// How worn the speakers playing the music sound: 0 new, 100 worn-out old ones.
+    #[serde(deserialize_with = "lenient")]
+    pub wear: u8,
 }
 
 /// Which of a coach's speakers play (owner 2026-11-13: a setting of the companion's, not the cab's, as real coaches
@@ -116,7 +203,8 @@ pub enum CoachSpeakers {
 impl SoundSettings {
     /// The tone the players play: the curve if Custom is chosen, flat if Recommended.
     pub fn playing(&self) -> crate::speakers::Equalizer {
-        if self.custom { self.equalizer.clamped() } else { crate::speakers::Equalizer::default() }
+        let curve = if self.custom { self.equalizer } else { crate::speakers::Equalizer::default() };
+        crate::speakers::Equalizer { wear: self.wear, ..curve }.clamped()
     }
 }
 
@@ -528,11 +616,15 @@ mod tests {
             },
             graphics: GraphicsSettings { gpu: Some("10de:2702:00000000:161".into()) },
             sound: SoundSettings {
-                equalizer: crate::speakers::Equalizer { bass: -3, mid: 1, treble: 2 },
+                equalizer: crate::speakers::Equalizer { bass: -3, mid: 1, treble: 2, wear: 0 },
                 custom: true,
                 coach: CoachSpeakers::Passengers,
+                wear: 0,
             },
             map: MapSettings { buildings: false, roads: false, fast: true },
+            ipad: IpadSettings { enabled: true },
+            controller: Default::default(),
+            announce: Default::default(),
             language: LanguageCode::new("pt_br"),
         };
         let json = to_json(&settings);

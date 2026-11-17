@@ -1,3 +1,4 @@
+import { sharedStorage } from '../../state/sharedStorage'
 import type { SpotifyItem } from '../../../shared/host'
 
 /**
@@ -71,7 +72,7 @@ export function readKept(stored: string | null = load()): Kept {
 
 function load(): string | null {
   try {
-    return localStorage.getItem(KEY)
+    return sharedStorage.getItem(KEY)
   } catch {
     return null
   }
@@ -80,7 +81,7 @@ function load(): string | null {
 /** Keeps a part (Home's, the Library's), the rest as it was. */
 export function keep(part: Partial<Kept>): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ ...readKept(), ...part }))
+    sharedStorage.setItem(KEY, JSON.stringify({ ...readKept(), ...part }))
   } catch {
     // Not kept: Spotify is asked as ever.
   }
@@ -89,7 +90,7 @@ export function keep(part: Partial<Kept>): void {
 /** Forgets it all (signed out). */
 export function forgetKept(): void {
   try {
-    localStorage.removeItem(KEY)
+    sharedStorage.removeItem(KEY)
   } catch {
     // Nothing kept, or nothing to remove.
   }

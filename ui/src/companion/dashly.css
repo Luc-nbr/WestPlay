@@ -1,0 +1,203 @@
+/* Dashly's look over the companion's room (room.css, companion.css): the logo's navy and blue, and its motion.
+   Loaded after both, so each rule here takes over the one it names. */
+
+.ob {
+  --navy: #0a1f44;
+  --blue: #3b6bff;
+  --blue-glow: rgb(59 107 255 / 0.35);
+  --room: #040a17;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgb(59 107 255 / 0.14), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, rgb(10 31 68 / 0.95), transparent 60%), var(--room);
+}
+
+/* Switches and progress in Dashly's blue, not iOS's green. */
+.ob-switch[data-on] {
+  background: var(--blue);
+  box-shadow: 0 0 14px var(--blue-glow);
+}
+
+/* ---------- Motion ---------- */
+
+/* Each part springs up into place, sharpening as it comes (instead of the plain rise). */
+.ob-in {
+  animation-name: dashly-in;
+  animation-duration: 1000ms;
+  animation-timing-function: var(--spring);
+  animation-delay: calc(var(--n, 0) * 55ms + 40ms);
+}
+
+@keyframes dashly-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.96);
+    filter: blur(12px);
+  }
+  60% {
+    filter: blur(0);
+  }
+}
+
+/* The section that's open: a capsule of blue light with a bar at its edge, gliding from row to row. */
+.cp-lit {
+  background: linear-gradient(90deg, rgb(59 107 255 / 0.32), rgb(59 107 255 / 0.08));
+  box-shadow:
+    inset 0 0 0 1px rgb(59 107 255 / 0.45),
+    0 6px 24px rgb(59 107 255 / 0.22);
+}
+
+.cp-lit::before {
+  content: '';
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: 4px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--blue);
+  box-shadow: 0 0 10px var(--blue);
+}
+
+.cp-row {
+  transition:
+    color 300ms ease,
+    transform 450ms var(--spring);
+}
+
+.cp-row:hover:not([data-here]) {
+  transform: translateX(4px);
+}
+
+/* ---------- The mark ---------- */
+
+.cp-brand .dashly-mark {
+  flex-shrink: 0;
+  border-radius: 22%;
+  box-shadow: 0 6px 20px var(--blue-glow);
+}
+
+/* Its chevrons draw themselves in, then now and then drive forward a little (held still with the room). */
+.dashly-chevron {
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation:
+    dashly-draw 900ms var(--ease) 300ms forwards,
+    dashly-drive 4s ease-in-out 1.8s infinite;
+  animation-play-state: running, var(--held, running);
+}
+
+.dashly-chevron-b {
+  animation-delay: 480ms, 1.98s;
+}
+
+@keyframes dashly-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dashly-drive {
+  0%,
+  72%,
+  100% {
+    transform: translateX(0);
+  }
+  82% {
+    transform: translateX(28px);
+  }
+  90% {
+    transform: translateX(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashly-chevron {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+}
+
+/* Eleven sections in a 600-high window: rows and groups a little closer. */
+.cp-list {
+  gap: 10px;
+}
+
+.cp-row {
+  height: 36px;
+}
+
+/* An announcement slot's buttons: small rounds of glass with a symbol each (record red, play blue). */
+.dashly-slot {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.dashly-round {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--fill-strong);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background 250ms ease,
+    transform 350ms var(--spring),
+    box-shadow 250ms ease;
+}
+
+.dashly-round:hover {
+  background: rgb(255 255 255 / 0.18);
+}
+
+.dashly-round:active {
+  transform: scale(0.9);
+}
+
+.dashly-round svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.dashly-round[data-kind='clear'] svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashly-round[data-kind='record'] {
+  color: var(--red);
+}
+
+.dashly-round[data-kind='play'] {
+  color: var(--blue);
+}
+
+.dashly-round[data-active] {
+  color: #fff;
+}
+
+.dashly-round[data-kind='record'][data-active] {
+  background: var(--red);
+  box-shadow: 0 0 16px rgb(255 69 58 / 0.55);
+  animation: dashly-recording 1.2s ease-in-out infinite var(--held, running);
+}
+
+.dashly-round[data-kind='play'][data-active] {
+  background: var(--blue);
+  box-shadow: 0 0 16px var(--blue-glow);
+}
+
+@keyframes dashly-recording {
+  50% {
+    box-shadow: 0 0 4px rgb(255 69 58 / 0.3);
+  }
+}

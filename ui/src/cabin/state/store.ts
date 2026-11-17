@@ -1,3 +1,4 @@
+import { IS_IPAD } from '../../shared/ipad'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import {
@@ -64,6 +65,7 @@ import { isIconStyle, setIcons, useLooks } from './looks'
 import type { OemMode } from './oem'
 import { INITIAL_POWER, power, type PowerEvent, type PowerState } from './power'
 import { isScreenLayoutId, type ScreenLayoutId } from './screen'
+import { localFields, onSharedChange, receivePageState, sharedStorage } from './sharedStorage'
 import { DEFAULT_TEXT_SIZE, STEPS_ADDED_BELOW, toTextSize } from './textSize'
 
 /** The Dashboard's widgets the player can turn off (turn-by-turn always shows while there's a route). */
@@ -230,7 +232,8 @@ export const useCabin = create<CabinState>()(
         }
         return kept
       },
-      storage: createJSONStorage(() => localStorage),
+      // The demo's never leaves the page; the player's is kept by WestPlay, the same on every screen (sharedStorage).
+      storage: createJSONStorage(() => (IS_DEMO ? localStorage : sharedStorage)),
       partialize: (state): Persisted => ({
         navigation: state.navigation,
         appearanceMode: state.appearanceMode,
@@ -405,6 +408,8 @@ function previewTruck(): TruckInfo | null {
 }
 
 function previewLayout(): ScreenLayoutId | null {
+  // The iPad is laid out as WestPlay's tablet (an iPad's glass), whatever truck the game is in.
+  if (IS_IPAD) return 'tablet'
   if (isInHost()) return null
   const layout = new URLSearchParams(location.search).get('layout')
   return isScreenLayoutId(layout) ? layout : null
@@ -442,6 +447,18 @@ export function connectHost(now: () => number = () => performance.now()): () => 
 function receiveHostMessage(now: () => number): (message: HostMessage) => void {
   return (message) => {
     switch (message.type) {
+      case 'pageState':
+      case 'pageStateChanged':
+        receivePageState(message)
+        break
+      case 'headUnit': {
+        // The iPad is the head unit: the truck's screen shows what it chose and the mouse doesn't reach it.
+        const cabin = useCabin.getState()
+        cabin.setTruckScreen(message.on && message.view === 'game')
+        if (message.on && message.view === 'dashboard') cabin.navigate({ type: 'showDashboard' })
+        if (message.on && message.view === 'map') cabin.navigate({ type: 'openApp', app: 'maps' })
+        break
+      }
       case 'telemetry': {
         const previous = useLive.getState().telemetry
         useLive.setState({ telemetry: message.data })
@@ -717,3 +734,7 @@ export function go(action: NavigationAction, origin: LaunchOrigin | null = null)
     animateNavigation(launchFor(before, after, origin), () => useCabin.getState().navigate(action))
   })
 }
+
+// Each screen's own: the app it shows and its brightness (sharedStorage).
+localFields('westplay.cabin', ['navigation', 'brightness'])
+if (!IS_DEMO) onSharedChange('westplay.cabin', () => useCabin.persist.rehydrate())

@@ -31,7 +31,9 @@ describe('keyRows', () => {
 
   it("lays out each language's own letters, and gives English to the languages that type it", () => {
     const top = (language: Parameters<typeof keyRows>[0]) =>
-      keyRows(language, 'letters')[0].map((key) => (key.kind === 'char' ? key.char : '')).join('')
+      keyRows(language, 'letters')[0]
+        .map((key) => (key.kind === 'char' ? key.char : ''))
+        .join('')
     expect(top(keyboardLanguage('de_de'))).toBe('qwertzuiopü')
     expect(top(keyboardLanguage('fr_fr'))).toBe('azertyuiop')
     expect(top(keyboardLanguage('ru_ru'))).toBe('йцукенгшщзхъ')
@@ -49,7 +51,13 @@ describe('keyRows', () => {
   it('switches between layers from the bottom row and the third', () => {
     // The globe only where there's another keyboard: English alone has none.
     expect(keyRows('en', 'letters')[3].map((key) => key.kind)).toEqual(['layer', 'space', 'hide', 'return'])
-    expect(keyRows('en', 'letters', true)[3].map((key) => key.kind)).toEqual(['layer', 'globe', 'space', 'hide', 'return'])
+    expect(keyRows('en', 'letters', true)[3].map((key) => key.kind)).toEqual([
+      'layer',
+      'globe',
+      'space',
+      'hide',
+      'return',
+    ])
     expect(keyRows('de', 'letters')[3][1]).toEqual({ kind: 'globe' })
     expect(keyRows('en', 'letters')[3][0]).toEqual({ kind: 'layer', to: 'numbers' })
     expect(keyRows('en', 'numbers')[3][0]).toEqual({ kind: 'layer', to: 'letters' })
@@ -113,7 +121,9 @@ describe('press', () => {
     expect(hangulDeleted('')).toBeNull()
     // Typed on the Korean keyboard, shift for the doubled consonant (closing the syllable: 하 + ㄲ is 핚).
     const korean = initialKeyboard('ko')
-    expect(typed([char('ㅎ'), char('ㅏ'), char('ㄴ'), { kind: 'delete' }, { kind: 'shift' }, char('ㄱ')], korean).text).toBe('핚')
+    expect(
+      typed([char('ㅎ'), char('ㅏ'), char('ㄴ'), { kind: 'delete' }, { kind: 'shift' }, char('ㄱ')], korean).text,
+    ).toBe('핚')
   })
 
   it('turns romaji into hiragana as it is typed', () => {

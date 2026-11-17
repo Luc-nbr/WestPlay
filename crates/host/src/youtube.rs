@@ -724,6 +724,11 @@ impl YouTube {
         })
     }
 
+    /// Its browser (its picture mirrored to the iPad: `mirror`).
+    pub fn view(&self) -> &OffscreenWebView {
+        &self.view
+    }
+
     /// Carries out the page's command (`Close` is the caller's: [`YouTube::close`]).
     pub fn command(&self, command: &Command) -> windows::core::Result<()> {
         match command {

@@ -63,7 +63,32 @@ window.westplayCabSound = (media, say) => {
     ['mid', { type: 'peaking', frequency: 1000, Q: 0.7 }],
     ['treble', { type: 'highshelf', frequency: 8000 }],
   ]
-  const flat = () => TONE.every(([band]) => !equalizer[band])
+  const flat = () => TONE.every(([band]) => !equalizer[band]) && !wear
+  // The speakers' wear (the companion's speaker quality): 0 new, the sound as it is; to 100, worn-out old units:
+  // a narrow, honky band, driven into distortion, a little hiss. After the tone, before the speakers.
+  let wear = 0
+  const setWear = () => {
+    if (!audio?.wear) return
+    const old = wear / 100
+    const { currentTime } = audio.context
+    const { highpass, lowpass, honk, shaper, gain, hiss } = audio.wear
+    const glide = (param, value) => param.setTargetAtTime(value, currentTime, 0.05)
+    for (const filter of highpass) glide(filter.frequency, old ? 20 * (350 / 20) ** old : 10)
+    glide(lowpass.frequency, old ? 20000 * (3500 / 20000) ** old : 22000)
+    glide(honk.gain, 9 * old)
+    glide(gain.gain, 10 ** ((-4.5 * old) / 20))
+    glide(hiss.gain, 0.004 * old * old)
+    const drive = 1 + 0.6 * old + 5 * old * old
+    if (old === 0) shaper.curve = null
+    else {
+      const curve = new Float32Array(1024)
+      for (let i = 0; i < curve.length; i++) {
+        const x = (i / (curve.length - 1)) * 2 - 1
+        curve[i] = Math.tanh(drive * x) / Math.tanh(drive)
+      }
+      shaper.curve = curve
+    }
+  }
   const setTone = (atOnce) => {
     if (!audio?.tone) return
     const { currentTime } = audio.context
@@ -182,23 +207,45 @@ window.westplayCabSound = (media, say) => {
     audio.source.connect(bands[0])
     audio.tone = { bands, trim }
     setTone(true)
+    // Then the speakers' wear.
+    const highpass = [0, 1].map(() => keep(new BiquadFilterNode(context, { type: 'highpass', frequency: 10, Q: Math.SQRT1_2 })))
+    const lowpass = keep(new BiquadFilterNode(context, { type: 'lowpass', frequency: 22000, Q: Math.SQRT1_2 }))
+    const honk = keep(new BiquadFilterNode(context, { type: 'peaking', frequency: 1600, Q: 1.4, gain: 0 }))
+    const shaper = keep(new WaveShaperNode(context, { oversample: '2x' }))
+    const worn = keep(new GainNode(context))
+    const noise = context.createBuffer(1, context.sampleRate * 2, context.sampleRate)
+    const samples = noise.getChannelData(0)
+    for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1
+    const hissing = keep(new AudioBufferSourceNode(context, { buffer: noise, loop: true }))
+    const hiss = keep(new GainNode(context, { gain: 0 }))
+    hissing.connect(hiss)
+    hiss.connect(worn)
+    hissing.start()
+    trim.connect(highpass[0])
+    highpass[0].connect(highpass[1])
+    highpass[1].connect(lowpass)
+    lowpass.connect(honk)
+    honk.connect(shaper)
+    shaper.connect(worn)
+    audio.wear = { highpass, lowpass, honk, shaper, gain: worn, hiss }
+    setWear()
     // Beside it, the spectrum's ear (measuring, playing nothing).
     audio.analyser = keep(new AnalyserNode(context, { fftSize: 4096, smoothingTimeConstant: 0.5, minDecibels: -80, maxDecibels: -22 }))
-    trim.connect(audio.analyser)
+    worn.connect(audio.analyser)
     // Last of all, the cab's walls (open while the camera is in it).
     const walls = keep(new BiquadFilterNode(context, { type: 'lowpass', frequency: outside ? muffled().frequency : 20000, Q: Math.SQRT1_2 }))
     const through = keep(new GainNode(context, { gain: outside ? muffled().gain : 1 }))
     walls.connect(through)
     audio.muffle = { filter: walls, gain: through }
     if (!speakers) {
-      trim.connect(walls)
+      worn.connect(walls)
       through.connect(context.destination)
       return
     }
     // Stereo always (a mono video plays on both sides), then each side, and both mixed.
     const stereo = keep(new GainNode(context, { channelCount: 2, channelCountMode: 'explicit', channelInterpretation: 'speakers' }))
     const split = keep(context.createChannelSplitter(2))
-    trim.connect(stereo)
+    worn.connect(stereo)
     stereo.connect(split)
     const channels = { left: keep(context.createGain()), right: keep(context.createGain()), both: keep(new GainNode(context, { gain: 0.5 })) }
     split.connect(channels.left, 0)
@@ -305,7 +352,9 @@ window.westplayCabSound = (media, say) => {
     },
     equalizer(told) {
       equalizer = Object.fromEntries(TONE.map(([band]) => [band, Number(told?.[band]) || 0]))
+      wear = Math.min(100, Math.max(0, Number(told?.wear) || 0))
       setTone(false)
+      setWear()
       try {
         wire()
       } catch {}

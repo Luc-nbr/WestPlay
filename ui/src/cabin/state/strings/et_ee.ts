@@ -8,7 +8,16 @@ const plural = (n: number, one: string, other: string) => (n === 1 ? one : other
 const countIn = (text: string) => (/^[\d\s.,  ]+$/.test(text) ? Number(text.replace(/\D/g, '')) : null)
 
 /** "Teisest mahasõidust": the exit, in the elative. */
-const EXITS = ['esimesest', 'teisest', 'kolmandast', 'neljandast', 'viiendast', 'kuuendast', 'seitsmendast', 'kaheksandast']
+const EXITS = [
+  'esimesest',
+  'teisest',
+  'kolmandast',
+  'neljandast',
+  'viiendast',
+  'kuuendast',
+  'seitsmendast',
+  'kaheksandast',
+]
 
 export const strings: Strings = {
   locale: 'et-EE',
@@ -92,7 +101,7 @@ export const strings: Strings = {
     full: 'Teekonnal on 10 peatust, rohkem mäng ei luba',
     onJob: 'Töö ajal määrab sihtkoha töö',
     noAnswer: 'Mäng ei vastanud',
-    elevated: 'Mäng töötab administraatorina, seega ei näe WestPlay selle teekonda. Käivita mäng tavaliselt',
+    elevated: 'Mäng töötab administraatorina, seega ei näe Dashly selle teekonda. Käivita mäng tavaliselt',
     unsupported: 'Seda mänguversiooni veel ei toetata',
     failed: 'Mäng ei leia sinna teed',
   },
@@ -261,7 +270,8 @@ export const strings: Strings = {
     logOut: 'Logi välja',
     account: 'Konto',
     previewTitle: 'Spotify eelvaade',
-    previewText: 'Registreeru ja kuula piiramatult lugusid ja taskuhäälinguid, aeg-ajalt reklaamidega. Krediitkaarti pole vaja.',
+    previewText:
+      'Registreeru ja kuula piiramatult lugusid ja taskuhäälinguid, aeg-ajalt reklaamidega. Krediitkaarti pole vaja.',
     signUpFree: 'Registreeru tasuta',
     prompts: {
       play: { title: 'Alusta kuulamist tasuta Spotify kontoga', text: '' },
@@ -468,11 +478,11 @@ export const strings: Strings = {
     automatic: 'Automaatne',
     automaticFooter: 'Tume öösel ja alati, kui tuled põlevad, nagu teeb seda veoki valgusandur.',
     vehicleBar: 'Sõidukiriba',
-    vehicleBarFooter: 'Veoki teaberiba WestPlay kõrval. Kui see on väljas, täidab WestPlay kogu ekraani.',
+    vehicleBarFooter: 'Veoki teaberiba Dashly kõrval. Kui see on väljas, täidab Dashly kogu ekraani.',
     textSize: 'Teksti suurus',
     reduceTransparency: 'Vähenda läbipaistvust',
     brightness: 'Heledus',
-    textSizeAbout: 'WestPlay rakendused kohanduvad allpool valitud lugemissuurusega.',
+    textSizeAbout: 'Dashly rakendused kohanduvad allpool valitud lugemissuurusega.',
     wallpaper: 'Taustapilt',
     dashboard: 'Armatuurlaud',
     widgets: 'Vidinad',
@@ -486,7 +496,7 @@ export const strings: Strings = {
     recommended: 'Soovitatud',
     custom: 'Kohandatud',
     equalizerFooter:
-      'WestPlay mängib muusikat iga veoki enda kõlaritest, mis on häälestatud selle kabiini järgi. Kui eelistad teistsugust kõla, saad siin kohandada kõigi muusikarakenduste heli kõigis veokites.',
+      'Dashly mängib muusikat iga veoki enda kõlaritest, mis on häälestatud selle kabiini järgi. Kui eelistad teistsugust kõla, saad siin kohandada kõigi muusikarakenduste heli kõigis veokites.',
     low: 'Madal',
     mid: 'Kesk',
     high: 'Kõrge',
@@ -519,7 +529,8 @@ export const strings: Strings = {
   },
   safari: {
     searchOrEnter: 'Otsige või sisestage veebisaidi nimi',
-    engineSuggestions: (engine) => `${engine === 'Google' ? 'Google’i' : engine === 'Bing' ? 'Bingi' : engine} soovitused`,
+    engineSuggestions: (engine) =>
+      `${engine === 'Google' ? 'Google’i' : engine === 'Bing' ? 'Bingi' : engine} soovitused`,
     sidebar: 'Kuva külgriba',
     back: 'Tagasi',
     forward: 'Edasi',
@@ -560,7 +571,7 @@ export const strings: Strings = {
     notSecureConnection: 'Safari ei saa lehte avada, kuna Safari ei saa luua serveriga turvalist ühendust.',
     couldNotOpen: 'Safari ei saa lehte avada.',
     tryAgain: 'Proovige uuesti',
-    noDownloads: 'WestPlay Safari ei laadi faile alla.',
+    noDownloads: 'Dashly Safari ei laadi faile alla.',
     searchEngine: 'Otsingumootor',
     tabs: 'Kaardid',
     separateTabBar: 'Eraldi kaardiriba',

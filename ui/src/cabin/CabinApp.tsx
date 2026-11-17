@@ -1,3 +1,4 @@
+import { IS_IPAD } from '../shared/ipad'
 import { useEffect, useState } from 'react'
 import { isInHost, postToHost } from '../shared/host'
 import { appleMusicPlayer, pauseAppleMusicWithGame } from './apps/music/pauseWithGame'
@@ -82,7 +83,7 @@ export function CabinApp() {
         <>
           {FOLLOW_POWER && phase !== 'on' && <BootScreen phase={phase} />}
           {/* In a plain browser the system cursor is there already. */}
-          {isInHost() && <Cursor />}
+          {isInHost() && !IS_IPAD && <Cursor />}
         </>
       }
     >

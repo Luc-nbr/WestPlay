@@ -1,3 +1,4 @@
+import { sharedStorage } from '../../state/sharedStorage'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'
 import { createAsking } from '../asking'
@@ -477,7 +478,7 @@ const VOLUME_KEY = 'westplay.spotify.volume'
 /** The volume last set here (0 to 1), if any. */
 function keptVolume(): number | null {
   try {
-    const kept = localStorage.getItem(VOLUME_KEY)
+    const kept = sharedStorage.getItem(VOLUME_KEY)
     const volume = kept === null ? NaN : Number(kept)
     return Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : null
   } catch {
@@ -496,7 +497,7 @@ export function setVolume(share: number, done = false): void {
   // Set now: no other to give back.
   volumeToGiveBack = false
   try {
-    localStorage.setItem(VOLUME_KEY, String(volume))
+    sharedStorage.setItem(VOLUME_KEY, String(volume))
   } catch {
     // Storage blocked: not kept, as before.
   }

@@ -88,7 +88,8 @@ export function hangulTyped(text: string, char: string): string {
     const kept = parts ? FINALS.indexOf(parts[0]) : 0
     const moved = parts ? parts[1] : FINALS[open.final]
     const next = INITIALS.indexOf(moved)
-    if (next >= 0) return before + syllable({ ...open, final: kept }) + syllable({ initial: next, medial: vowel, final: 0 })
+    if (next >= 0)
+      return before + syllable({ ...open, final: kept }) + syllable({ initial: next, medial: vowel, final: 0 })
   }
   const pair = VOWEL_PAIRS[last + char]
   if (pair) return before + pair

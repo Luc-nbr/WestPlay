@@ -47,6 +47,25 @@ export interface HostStatus {
   /** Every profile's map (mirrors `westplay_host::maps::ProfileMap`): WestPlay makes one for each, one by
    * one, the profile played first. */
   profileMaps: ProfileMap[]
+  /** The iPad (Truck Screen › iPad), while switched on: where to open WestPlay on it, its pairing code. */
+  ipad: { address: string; code: string; link: string; connected: boolean; fps: number | null } | null
+  /** The controller button last pressed (`count` new with each press), for binding one. */
+  controllerPress: { device: string; name: string; button: number; count: number } | null
+  /** The announcements' slots: each one's length in seconds (null: empty), and what's recording or playing. */
+  announce: {
+    slots: (number | null)[]
+    recording: number | null
+    playing: number | null
+    /** The microphone heard now (always on, or push-to-talk held). */
+    talking: boolean
+    inputs: { id: string; name: string }[]
+    outputs: { id: string; name: string }[]
+    asioDrivers: string[]
+    asioInputs: string[]
+    asioOutputs: string[]
+    engine: { driver: string; rate: number; buffer: number; inputMs: number; outputMs: number } | null
+    error: string | null
+  }
   error: string | null
 }
 

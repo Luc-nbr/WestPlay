@@ -125,3 +125,17 @@
     opacity: 0;
   }
 }
+
+/* Dashly's intro: on the logo's navy, its mark glowing blue, its wordmark as the logo writes it. */
+.boot:has(.boot-intro) {
+  background: radial-gradient(70% 70% at 50% 50%, #0d2a5c, #0a1f44 45%, #050d1f);
+}
+
+.boot-intro-mark img {
+  box-shadow: 0 0 calc(60px * var(--text-scale, 1)) rgb(59 107 255 / 0.55);
+}
+
+.boot-intro-wordmark {
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+}

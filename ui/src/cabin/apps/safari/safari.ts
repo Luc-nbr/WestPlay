@@ -1,3 +1,5 @@
+import { hostFiles } from '../../../shared/ipad'
+import { onSharedChange, sharedStorage } from '../../state/sharedStorage'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { isInHost, postToHost, type SafariCommand, type SafariDialog, type SafariTabState } from '../../../shared/host'
@@ -93,7 +95,7 @@ export const useSafari = create<SafariState>()(
     {
       name: 'westplay.safari',
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sharedStorage),
       partialize: (state) => ({
         tabs: state.tabs,
         active: state.active,
@@ -406,5 +408,7 @@ export function receivePlaying(playing: boolean): void {
 
 /** Where a tab's picture is (the host's `safari::TABS_HOST`), or `null` with none yet. */
 export function pictureOf(tab: number, version: number | undefined): string | null {
-  return version ? `https://westplay.safari-tabs/tab-${tab}.png?v=${version}` : null
+  return version ? `${hostFiles('safari-tabs')}/tab-${tab}.png?v=${version}` : null
 }
+
+onSharedChange('westplay.safari', () => useSafari.persist.rehydrate())

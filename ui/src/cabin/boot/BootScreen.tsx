@@ -100,10 +100,10 @@ function WestPlayIntro() {
   return (
     <div className="boot-intro" style={{ '--mark-shift': `${shift}px` } as CSSProperties}>
       <span className="boot-intro-mark">
-        <img src="/westplay.png" alt="" />
+        <img src="/dashly-mark.svg" alt="" />
       </span>
       <span ref={wordmark} className="boot-intro-wordmark">
-        WestPlay
+        Dashly
       </span>
     </div>
   )

@@ -8,7 +8,7 @@ import { useHeldKey } from './pages/heldKey'
 import { Lesson, TouchLayer } from './pages/Lesson'
 import { Launch, TourCard } from './pages/Tour'
 import { Accounts } from './pages/Accounts'
-import { Controls } from './pages/Controls'
+import { AnnouncePage, AudioPage, Controls, WheelPage } from './pages/Controls'
 import { Customize } from './pages/Customize'
 import { type MapProgress, useMapProgress } from './mapProgress'
 import { MapPage } from './pages/MapPage'
@@ -28,6 +28,8 @@ import { GLOW, type Screen, ScreenContext } from './room/screen'
 import { type Banner, GlassCursor, type Pose, TruckScreen } from './room/TruckScreen'
 import { useDemo } from './room/useDemo'
 import './companion.css'
+import './dashly.css'
+import { DashlyMark } from '../shared/DashlyMark'
 import { defaultMapAddress, GAME_KINDS, GAME_SHORT_NAMES, type GameCheck, type SetupState, setupState } from './setup'
 import { FILES_BASE, useCustomizations } from './customize'
 import { type Offer, useUpdateOffer } from './update'
@@ -91,10 +93,10 @@ export function Companion() {
 }
 
 const SECTIONS: SectionId[][] = [
-  ['screen', 'controls', 'customize'],
+  ['screen', 'customize'],
+  ['controls', 'wheel', 'announce', 'audio'],
   ['accounts', 'map'],
-  ['setup', 'about'],
-  ['support'],
+  ['setup', 'about', 'support'],
 ]
 /** The sections in order: the tutorial's tour goes through them. */
 const TOUR = SECTIONS.flat()
@@ -110,6 +112,9 @@ const POSE: Record<Phase, Pose> = { lesson: 'full', tour: 'aside', launch: 'fina
 const SECTION_GLOW: Record<SectionId, string> = {
   screen: GLOW.home,
   controls: GLOW.home,
+  wheel: GLOW.home,
+  announce: GLOW.music,
+  audio: GLOW.music,
   customize: GLOW.home,
   accounts: GLOW.youtube,
   map: GLOW.maps,
@@ -353,6 +358,9 @@ function Room({
             )}
             {roomShown && section === 'screen' && <ScreenPage {...page} />}
             {roomShown && section === 'controls' && <Controls {...page} />}
+            {roomShown && section === 'wheel' && <WheelPage {...page} />}
+            {roomShown && section === 'announce' && <AnnouncePage {...page} />}
+            {roomShown && section === 'audio' && <AudioPage {...page} />}
             {roomShown && section === 'customize' && <Customize {...page} />}
             {roomShown && section === 'accounts' && <Accounts {...page} />}
             {roomShown && section === 'map' && <MapPage {...page} />}
@@ -436,6 +444,9 @@ function SectionList({
               ? cw.screen.screenUnsupported
               : '',
     controls: keyName,
+    wheel: String(Object.keys(settings.settings?.controller ?? {}).length || ''),
+    announce: status?.announce?.talking ? cw.values.on : '',
+    audio: status?.announce?.engine?.driver.replace(/^ASIO: .*/, 'ASIO') ?? '',
     customize: '',
     accounts:
       signedIn.youtube === null && signedIn.spotify === null && signedIn.appleMusic === null
@@ -454,11 +465,11 @@ function SectionList({
 
   let place = 2
   return (
-    <nav ref={list} className="cp-list" aria-label="WestPlay">
+    <nav ref={list} className="cp-list" aria-label="Dashly">
       <header className="cp-brand ob-in" style={n(0)}>
-        <img src="/westplay.png" alt="" />
+        <DashlyMark size={34} />
         <span>
-          <b>WestPlay</b>
+          <b>Dashly</b>
           <span className="cp-state" data-state={state}>
             <i />
             {cw.state[state]}

@@ -1,3 +1,4 @@
+import { hostFiles } from './ipad'
 import type { AppIconRole } from './icons'
 
 /**
@@ -31,7 +32,7 @@ export type IconStyle = 'auto' | 'light' | 'dark'
 export const NO_CUSTOMIZATIONS: Customizations = { wallpapers: [], iconSets: [] }
 
 /** Where the cabin page finds the player's files (the host maps the folder there). */
-export const CABIN_FILES = 'https://westplay.customize/'
+export const CABIN_FILES = `${hostFiles('customize')}/`
 /** Where the companion finds them (the app's `westplay-customize` scheme, as WebView2 addresses it). */
 export const COMPANION_FILES = 'http://westplay-customize.localhost/'
 

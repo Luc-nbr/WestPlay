@@ -97,7 +97,7 @@ export const strings: Strings = {
     full: 'Ruta već ima 10 stajališta, više igra ne dopušta',
     onJob: 'Dok vozite posao, odredište određuje posao',
     noAnswer: 'Igra nije odgovorila',
-    elevated: 'Igra je pokrenuta kao administrator pa WestPlay ne vidi njezinu rutu. Pokrenite je normalno',
+    elevated: 'Igra je pokrenuta kao administrator pa Dashly ne vidi njezinu rutu. Pokrenite je normalno',
     unsupported: 'Ova verzija igre još nije podržana',
     failed: 'Igra ne može izračunati rutu do tamo',
   },
@@ -227,7 +227,9 @@ export const strings: Strings = {
     monthlyListeners: (count) => {
       const n = countIn(count)
       const word =
-        n === null ? 'mjesečnih slušatelja' : plural(n, 'mjesečni slušatelj', 'mjesečna slušatelja', 'mjesečnih slušatelja')
+        n === null
+          ? 'mjesečnih slušatelja'
+          : plural(n, 'mjesečni slušatelj', 'mjesečna slušatelja', 'mjesečnih slušatelja')
       return `${count} ${word}`
     },
     popular: 'Popularno',
@@ -271,7 +273,8 @@ export const strings: Strings = {
     logOut: 'Odjava',
     account: 'Račun',
     previewTitle: 'Pretpregled Spotifyja',
-    previewText: 'Registriraj se i slušaj neograničeno pjesama i podcasta uz povremene oglase. Kreditna kartica nije potrebna.',
+    previewText:
+      'Registriraj se i slušaj neograničeno pjesama i podcasta uz povremene oglase. Kreditna kartica nije potrebna.',
     signUpFree: 'Besplatna registracija',
     prompts: {
       play: { title: 'Počni slušati s besplatnim Spotify računom', text: '' },
@@ -480,11 +483,12 @@ export const strings: Strings = {
     automatic: 'Automatski',
     automaticFooter: 'Tamno noću i kad god su uključena svjetla, kao što to radi senzor svjetla u kamionu.',
     vehicleBar: 'Traka vozila',
-    vehicleBarFooter: 'Informacijska traka kamiona pokraj WestPlaya. Kad je isključena, WestPlay zauzima cijeli zaslon.',
+    vehicleBarFooter:
+      'Informacijska traka kamiona pokraj Dashlya. Kad je isključena, Dashly zauzima cijeli zaslon.',
     textSize: 'Veličina teksta',
     reduceTransparency: 'Smanji prozirnost',
     brightness: 'Svjetlina',
-    textSizeAbout: 'Aplikacije WestPlaya prilagodit će se veličini za čitanje koju odaberete ispod.',
+    textSizeAbout: 'Aplikacije Dashlya prilagodit će se veličini za čitanje koju odaberete ispod.',
     wallpaper: 'Pozadina',
     dashboard: 'Nadzorna ploča',
     widgets: 'Widgeti',
@@ -498,7 +502,7 @@ export const strings: Strings = {
     recommended: 'Preporučeno',
     custom: 'Prilagođeno',
     equalizerFooter:
-      'WestPlay reproducira glazbu kroz zvučnike svakog kamiona, ugođene za njegovu kabinu. Ako želite drugačiji zvuk, ovdje možete prilagoditi zvuk svih glazbenih aplikacija, u svakom kamionu.',
+      'Dashly reproducira glazbu kroz zvučnike svakog kamiona, ugođene za njegovu kabinu. Ako želite drugačiji zvuk, ovdje možete prilagoditi zvuk svih glazbenih aplikacija, u svakom kamionu.',
     low: 'Niski',
     mid: 'Srednji',
     high: 'Visoki',
@@ -569,10 +573,11 @@ export const strings: Strings = {
     serverNotFound: 'Safari ne može otvoriti stranicu jer nije moguće pronaći poslužitelj.',
     notConnected: 'Safari ne može otvoriti stranicu jer vaše računalo nije spojeno na internet.',
     timedOut: 'Safari ne može otvoriti stranicu jer je poslužitelj prestao odgovarati.',
-    notSecureConnection: 'Safari ne može otvoriti stranicu jer Safari ne može uspostaviti sigurnu vezu s poslužiteljem.',
+    notSecureConnection:
+      'Safari ne može otvoriti stranicu jer Safari ne može uspostaviti sigurnu vezu s poslužiteljem.',
     couldNotOpen: 'Safari ne može otvoriti stranicu.',
     tryAgain: 'Pokušaj ponovno',
-    noDownloads: 'Safari u WestPlayju ne preuzima datoteke.',
+    noDownloads: 'Safari u Dashlyju ne preuzima datoteke.',
     searchEngine: 'Tražilica',
     tabs: 'Kartice',
     separateTabBar: 'Zasebna traka kartica',

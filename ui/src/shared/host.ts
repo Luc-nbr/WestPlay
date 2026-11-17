@@ -267,6 +267,12 @@ export type HostMessage =
   | { type: 'safariNoDownload'; tab: number }
   /** Whether any of Safari's pages plays sound. */
   | { type: 'safariPlaying'; playing: boolean }
+  /** What the page keeps, kept by WestPlay for every page shown (by storage key; `null`: nothing kept yet). */
+  | { type: 'pageState'; values: Record<string, string> | null }
+  /** One part of it changed (`null`: forgotten). */
+  | { type: 'pageStateChanged'; key: string; value: string | null }
+  /** Whether the iPad is the head unit, and what the truck's screen shows meanwhile (the truck's page only). */
+  | { type: 'headUnit'; on: boolean; view: 'dashboard' | 'map' | 'game' }
 
 /** The game's weather: the one there is and the one it's turning to (the same once it has); in game minutes,
  * how long until the game changes it next; and how wet the roads are, percent. Each of the last two `null`
@@ -361,6 +367,10 @@ export type PageMessage =
   | { type: 'player'; command: PlayerCommand }
   /** What the Safari app asks of its pages (`westplay_host::safari::Command`). */
   | { type: 'safari'; command: SafariCommand }
+  /** A part of what the page keeps changed (`westplay_host::page_state`; `null`: forgotten). */
+  | { type: 'pageState'; key: string; value: string | null }
+  /** What the page kept itself, handed over once when WestPlay keeps nothing yet. */
+  | { type: 'pageStateImport'; values: Record<string, string> }
 
 /** A Safari tab's page (`westplay_host::safari::TabState`): its address and title, whether it loads, whether it
  * can go back or forward, its icon's address, its colour at the top (a CSS colour), whether it's full screen,

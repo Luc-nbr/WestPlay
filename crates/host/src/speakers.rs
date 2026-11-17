@@ -481,6 +481,42 @@ impl Coach {
     }
 }
 
+/// Speakers merged into at most `per_side` sources each side (by where they sit along the cab), for the players'
+/// pages: each source is a 3D sound of its own there (HRTF, heavy), and a coach's 26 overhead units, each the
+/// players' every page, take the game's frames. Each source sits where its units' sound comes from (their
+/// centre, as loud as each is at `head`), plays as late as they do on average, and is as loud at the head as
+/// they all were together (their powers summed): the whole coach still heard, with a handful of sources.
+pub fn merged(speakers: &[Speaker], head: [f32; 3], per_side: usize) -> Vec<Speaker> {
+    // As cab_sound.js has a speaker's sound fall with its distance from the head.
+    const NEAR: f32 = 0.3;
+    let fall = |at: [f32; 3]| {
+        NEAR / ((at[0] - head[0]).hypot(at[1] - head[1]).hypot(at[2] - head[2])).max(NEAR)
+    };
+    let mut merged = Vec::new();
+    for channel in [Channel::Left, Channel::Right, Channel::Both] {
+        let mut side: Vec<&Speaker> = speakers.iter().filter(|s| s.channel == channel).collect();
+        if side.is_empty() {
+            continue;
+        }
+        side.sort_by(|a, b| a.at[2].total_cmp(&b.at[2]));
+        let size = side.len().div_ceil(per_side.max(1));
+        for group in side.chunks(size) {
+            let powers: Vec<f32> = group.iter().map(|s| (fall(s.at) * 10f32.powf(s.level / 20.0)).powi(2)).collect();
+            let total: f32 = powers.iter().sum::<f32>().max(1e-12);
+            let mean = |of: &dyn Fn(&Speaker) -> f32| group.iter().zip(&powers).map(|(s, p)| of(s) * p).sum::<f32>() / total;
+            let at = [mean(&|s| s.at[0]), mean(&|s| s.at[1]), mean(&|s| s.at[2])];
+            merged.push(Speaker {
+                band: group[0].band,
+                level: 20.0 * (total.sqrt() / fall(at)).log10(),
+                channel,
+                at,
+                delay: mean(&|s| s.delay),
+            });
+        }
+    }
+    merged
+}
+
 /// How far a point of an interior model is from the driver's head (its origin), metres.
 fn distance([x, y, z]: [f32; 3]) -> f32 {
     (x * x + y * y + z * z).sqrt()
@@ -1288,6 +1324,14 @@ pub struct Equalizer {
     pub bass: i8,
     pub mid: i8,
     pub treble: i8,
+    /// How worn the speakers sound (the companion's music speaker quality): 0 new, the sound as it is, to 100
+    /// worn-out old units (cab_sound.js). Not the curve's: the companion's setting (`SoundSettings::wear`).
+    #[serde(skip_serializing_if = "is_new")]
+    pub wear: u8,
+}
+
+fn is_new(wear: &u8) -> bool {
+    *wear == 0
 }
 
 impl Equalizer {
@@ -1297,7 +1341,7 @@ impl Equalizer {
     /// Each band within [`Equalizer::MOST`] either way.
     pub fn clamped(self) -> Self {
         let clamp = |db: i8| db.clamp(-Self::MOST, Self::MOST);
-        Self { bass: clamp(self.bass), mid: clamp(self.mid), treble: clamp(self.treble) }
+        Self { bass: clamp(self.bass), mid: clamp(self.mid), treble: clamp(self.treble), wear: self.wear.min(100) }
     }
 }
 
@@ -1341,6 +1385,29 @@ pub const MOST_SPEAKERS: usize = 32;
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_coachs_units_merge_into_a_few_sources_as_loud_as_all() {
+        let head = [0.0, 0.0, 0.0];
+        let units: Vec<Speaker> = (0..26)
+            .map(|i| {
+                let x = if i % 2 == 0 { -0.8 } else { 0.8 };
+                let z = (i / 2) as f32 * 0.9;
+                Speaker { delay: z / 343.0 * 1000.0, ..speaker(CEILING_BAND, 0.0, side([x, 0.5, z]), [x, 0.5, z]) }
+            })
+            .collect();
+        let merged = merged(&units, head, 3);
+        assert_eq!(merged.len(), 6);
+        let power = |set: &[Speaker]| -> f32 {
+            set.iter()
+                .map(|s| {
+                    let d = (s.at[0].powi(2) + s.at[1].powi(2) + s.at[2].powi(2)).sqrt().max(0.3);
+                    (0.3 / d * 10f32.powf(s.level / 20.0)).powi(2)
+                })
+                .sum()
+        };
+        assert!((power(&merged) / power(&units) - 1.0).abs() < 0.01);
+    }
+
     use super::*;
 
     /// The MAN Lion's Coach's driver's head in the cab, as the SDK said it (the owner's plugin log, 2026-11-13).
@@ -1509,8 +1576,8 @@ mod tests {
 
     #[test]
     fn keeps_the_tone_within_a_car_stereos_range() {
-        let wild = Equalizer { bass: -40, mid: 3, treble: 100 };
-        assert_eq!(wild.clamped(), Equalizer { bass: -6, mid: 3, treble: 6 });
+        let wild = Equalizer { bass: -40, mid: 3, treble: 100, wear: 0 };
+        assert_eq!(wild.clamped(), Equalizer { bass: -6, mid: 3, treble: 6, wear: 0 });
         assert_eq!(Equalizer::default().clamped(), Equalizer::default());
     }
 

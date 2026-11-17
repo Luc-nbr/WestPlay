@@ -1,3 +1,4 @@
+import { onSharedChange, sharedStorage } from '../../state/sharedStorage'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
@@ -154,7 +155,7 @@ export const useYouTubeMusic = create<YouTubeMusicState>()(
     {
       name: 'westplay.youtubeMusic',
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sharedStorage),
       // Signed in or not and the account's picture (shown at once as WestPlay starts), and
       // the searches made. Nothing else.
       partialize: (state) => ({ signedIn: state.signedIn, avatar: state.avatar, searches: state.searches }),
@@ -482,7 +483,7 @@ const VOLUME_KEY = 'westplay.youtubeMusic.volume'
 /** The volume last set here (0 to 1), if any. */
 function keptVolume(): number | null {
   try {
-    const kept = localStorage.getItem(VOLUME_KEY)
+    const kept = sharedStorage.getItem(VOLUME_KEY)
     const volume = kept === null ? NaN : Number(kept)
     return Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : null
   } catch {
@@ -501,7 +502,7 @@ export function setVolume(share: number, done = false): void {
   // Set now: no other to give back.
   volumeToGiveBack = false
   try {
-    localStorage.setItem(VOLUME_KEY, String(volume))
+    sharedStorage.setItem(VOLUME_KEY, String(volume))
   } catch {
     // Storage blocked: not kept, as before.
   }
@@ -813,3 +814,5 @@ export function useWebPlayer(language: string): void {
     asking.clear()
   }, [language])
 }
+
+onSharedChange('westplay.youtubeMusic', () => useYouTubeMusic.persist.rehydrate())

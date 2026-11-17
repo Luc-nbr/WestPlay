@@ -37,6 +37,8 @@ export interface Settings {
     equalizer: Equalizer
     custom: boolean
     coach: CoachSpeakers
+    /** How worn the music's speakers sound: 0 new, 100 worn-out old. */
+    wear: number
   }
   /** The cab's map: whether its buildings rise from it, and its bridges and ramps; and whether the maps are
    * prepared faster (every processor thread, up to 80% of the memory). */
@@ -44,6 +46,31 @@ export interface Settings {
     buildings: boolean
     roads: boolean
     fast: boolean
+  }
+  /** The iPad as the screen (Truck Screen › iPad): served on the local network while on. */
+  ipad: {
+    enabled: boolean
+  }
+  /** The wheel's buttons bound to the keybinds' actions, by action. */
+  controller: Partial<Record<ControllerAction, ControllerButton>>
+  /** The microphone live through the coach's speakers, and how loud (0-100). */
+  announce: {
+    on: boolean
+    volume: number
+    quality: number
+    /** Push-to-talk on the keyboard or mouse. */
+    pttKey: KeyCode | null
+    /** The audio, as a DAW's: driver, devices (Windows ids; null: the default), ASIO driver and channels, buffer. */
+    driver: AudioDriver
+    input: string | null
+    output: string | null
+    asioDriver: string | null
+    asioInput: number
+    asioOutput: number
+    buffer: number
+    /** With ASIO, the sound on a Windows output too (for Discord sharing the screen). */
+    streamCopy: boolean
+    streamOutput: string | null
   }
   /** The language WestPlay speaks in the cab and here: one of the game's (`de_de`), or `null`: the game's. */
   language: string | null
@@ -59,6 +86,24 @@ export type TruckStrip = 'auto' | 'off'
 /** Mirrors `westplay_host::settings::KeyCode`: a key of the keyboard or a button of the mouse, as Windows
  * numbers it (its virtual-key code: 0x05 the mouse's back button, 0x31 the 1 key, 0xA4 Left Alt). */
 export type KeyCode = number
+
+export type AudioDriver = 'wasapi' | 'exclusive' | 'asio'
+
+export const DEFAULT_ANNOUNCE: Settings['announce'] = {
+  on: false,
+  volume: 80,
+  quality: 60,
+  pttKey: null,
+  driver: 'wasapi',
+  input: null,
+  output: null,
+  asioDriver: null,
+  asioInput: 0,
+  asioOutput: 0,
+  buffer: 128,
+  streamCopy: false,
+  streamOutput: null,
+}
 
 /** The keys the onboarding offers to hold (its keycaps), by the names their words have. */
 export type KeyPreset = 'leftAlt' | 'rightCtrl' | 'mouseBack' | 'mouseForward'
@@ -78,6 +123,49 @@ export type InteractionMode = 'hold' | 'toggle'
 
 /** Mirrors `westplay_host::settings::Keybinds`: the playing music's volume up and down, play/pause, and the
  * screen's brightness down and up. */
+/** What a wheel's button can do: the keybinds' actions, and the next and previous song. */
+export type ControllerAction =
+  | 'volumeUp'
+  | 'volumeDown'
+  | 'playPause'
+  | 'nextTrack'
+  | 'previousTrack'
+  | 'brightnessDown'
+  | 'brightnessUp'
+  | 'announce'
+  | 'pushToTalk'
+  | 'slot1'
+  | 'slot2'
+  | 'slot3'
+  | 'slot4'
+  | 'slot5'
+  | 'slot6'
+
+export const CONTROLLER_ACTIONS: ControllerAction[] = [
+  'playPause',
+  'nextTrack',
+  'previousTrack',
+  'volumeUp',
+  'volumeDown',
+  'brightnessDown',
+  'brightnessUp',
+  'pushToTalk',
+  'announce',
+  'slot1',
+  'slot2',
+  'slot3',
+  'slot4',
+  'slot5',
+  'slot6',
+]
+
+/** A controller's button: the controller (USB vendor:product), its name, the button (1 = the first). */
+export interface ControllerButton {
+  device: string
+  name: string
+  button: number
+}
+
 export type KeybindId = 'volumeUp' | 'volumeDown' | 'playPause' | 'brightnessDown' | 'brightnessUp'
 
 /** In a row as their default keys are (1 to 5), as on a stereo: volume down, play/pause, volume up; then

@@ -169,6 +169,11 @@ const OB_GPS_GLASS: &[(&str, Glass)] = &[
         "manlions",
         Glass { left: 0.0047, right: 0.9965, top: 0.0047, bottom: 0.9964, width_cm: 13.14, height_cm: 7.32 },
     ),
+    // The Coaches DLC's MAN Lion's Coach with the same portable navigator (owner 2026-11-17: WestPlay on it too).
+    (
+        "man.lions_24",
+        Glass { left: 0.0047, right: 0.9965, top: 0.0047, bottom: 0.9964, width_cm: 13.14, height_cm: 7.32 },
+    ),
 ];
 
 /// The glass of the screen at layout `index` in the truck `truck_id`, where WestPlay's image covers its part's
@@ -292,7 +297,7 @@ pub const TRUCK_UNSUPPORTED: u32 = 2;
 const SHARED_LAYOUT_TRUCKS: &[(&str, &[&str])] = &[
     ("generic", &["scania.s_2016", "scania.r_2016", "scania.s_2024e"]),
     // The game's toy GPS (Cabin Accessories), WestPlay's only on Oyuncuyusbis' coaches' Gps parts ([`OB_GPS_GLASS`]).
-    ("ob-gps", &["setra516hd", "t16shd", "setradt531", "manlions"]),
+    ("ob-gps", &["setra516hd", "t16shd", "setradt531", "manlions", "man.lions_24"]),
 ];
 
 /// The buses' screens WestPlay is on (the Coaches DLC's own, the bus mods' Gps parts): in a bus the WestPlay tablet,
@@ -1229,16 +1234,16 @@ mod tests {
     fn the_games_toy_gps_is_westplays_only_on_the_oyuncuyusbis_coaches_gps_parts() {
         let gps = screen_layouts().iter().position(|layout| layout.id == "ob-gps").unwrap();
         assert_eq!(screen_layouts()[gps].gps_scripts, ["ui/dashboard/gps.dlc_toys.sii"]);
-        for truck in ["vehicle.setra516hd", "t16shd", "vehicle.setradt531", "vehicle.manlions"] {
+        for truck in ["vehicle.setra516hd", "t16shd", "vehicle.setradt531", "vehicle.manlions", "vehicle.man.lions_24"] {
             assert!(screen_supported(gps, truck), "{truck}");
             assert!(glass(gps, truck).is_some(), "{truck}");
         }
         // Any other truck with the toy GPS keeps the game's own.
-        for truck in ["vehicle.daf.2021", "vehicle.scania.s_2016", "vehicle.man.lions_24"] {
+        for truck in ["vehicle.daf.2021", "vehicle.scania.s_2016", "vehicle.scania.touring_23"] {
             assert!(!screen_supported(gps, truck), "{truck}");
             assert_eq!(glass(gps, truck), None, "{truck}");
         }
-        assert_eq!(layout_trucks("ob-gps"), ["setra516hd", "t16shd", "setradt531", "manlions"]);
+        assert_eq!(layout_trucks("ob-gps"), ["setra516hd", "t16shd", "setradt531", "manlions", "man.lions_24"]);
         assert!(layout_trucks("daf-2021").is_empty());
     }
 

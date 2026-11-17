@@ -218,6 +218,8 @@ pub struct OffscreenWebView {
     /// The worst process failure since last taken (`take_failure`).
     failure: Rc<Cell<Option<Failure>>>,
     pub version: String,
+    /// Also given every message posted to the page (the cabin's: the iPad's page gets them too, `remote`).
+    tee: RefCell<Option<Box<dyn Fn(&str)>>>,
 }
 
 impl OffscreenWebView {
@@ -366,7 +368,18 @@ impl OffscreenWebView {
         // SAFETY: the handler and the token are locals for the call; WebView2 keeps its own reference to the handler.
         unsafe { webview.add_ProcessFailed(&handler, &mut token)? };
 
-        Ok(Self { environment, root, host, composition, controller, webview, page_messages, failure, version })
+        Ok(Self {
+            environment,
+            root,
+            host,
+            composition,
+            controller,
+            webview,
+            page_messages,
+            failure,
+            version,
+            tee: RefCell::new(None),
+        })
     }
 
     /// The worst WebView2 process failure since the last call, if any.
@@ -689,7 +702,20 @@ impl OffscreenWebView {
         std::mem::take(&mut self.page_messages.borrow_mut())
     }
 
+    /// Its own visual (a player's picture for the iPad: `mirror`).
+    pub fn visual(&self) -> windows::core::Result<windows::UI::Composition::Visual> {
+        self.root.cast()
+    }
+
+    /// Every message posted to this page goes to `tee` too (`None`: no longer).
+    pub fn set_tee(&self, tee: Option<Box<dyn Fn(&str)>>) {
+        *self.tee.borrow_mut() = tee;
+    }
+
     pub fn post_json(&self, json: &str) -> windows::core::Result<()> {
+        if let Some(tee) = &*self.tee.borrow() {
+            tee(json);
+        }
         // SAFETY: the WebView is alive as long as `self`; the message lives through the call.
         unsafe { self.webview.PostWebMessageAsJson(&HSTRING::from(json)) }
     }

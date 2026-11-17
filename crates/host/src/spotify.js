@@ -248,6 +248,8 @@
 
   const FALLBACK = '#535353'
   const LIKED = 'spotify:collection:tracks'
+  // Spotify's DJ (its playlist's address, and the forms its Home gives it).
+  const DJ = /^spotify:playlist:37i9dQZF1EYkqdzj48dyYq$|^spotify:(lexicon|dj)/
   // Liked Songs' own address (it holds the account's name): kept here, never told.
   let likedUri = null
   let likedName = null
@@ -811,6 +813,7 @@
   const PAGES = { album: 'album', playlist: 'playlist', artist: 'artist', show: 'show', track: 'track' }
   const pageOf = (uri) => {
     if (uri === LIKED || /:collection$/.test(uri)) return '/collection/tracks'
+    if (DJ.test(uri)) return '/playlist/37i9dQZF1EYkqdzj48dyYq'
     const [, kind, id] = uri.split(':')
     return PAGES[kind] && id ? `/${PAGES[kind]}/${id}` : null
   }
@@ -837,7 +840,12 @@
       : null
     const button = row
       ? row.closest('[data-testid="tracklist-row"]')?.querySelector('button')
-      : await appears(() => document.querySelector('[data-testid="action-bar-row"] [data-testid="play-button"]'))
+      : await appears(
+          () =>
+            document.querySelector('[data-testid="action-bar-row"] [data-testid="play-button"]') ??
+            // DJ's page has its Play of its own, not in an action bar.
+            document.querySelector('main [data-testid="play-button"]'),
+        )
     if (!button) throw new Error('no play button')
     button.click()
   }
@@ -897,6 +905,12 @@
     // Liked Songs plays by its own address, which the page learns from Your Library.
     if (context === LIKED && !likedUri) await library().catch(() => {})
     const uri = inward(context)
+    // Spotify's DJ plays only as its own players start it: Connect takes a plain play of it and plays nothing. On
+    // the page, as the player would on open.spotify.com (where it plays: owner 2026-11-16).
+    if (DJ.test(uri)) {
+      await playOnPage(uri, null)
+      return
+    }
     await command(
       'play',
       {
