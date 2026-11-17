@@ -33,6 +33,8 @@ use crate::settings::{AnnounceSettings, AudioDriver};
 
 /// How many announcements can be kept.
 pub const SLOTS: usize = 6;
+/// Push-to-record's recording, playing (no slot of its own).
+const QUICK: usize = usize::MAX;
 /// The longest recording (seconds).
 const LONGEST: f32 = 60.0;
 
@@ -87,6 +89,8 @@ pub struct AnnounceStatus {
     pub recording: Option<usize>,
     pub playing: Option<usize>,
     pub talking: bool,
+    /// Push-to-record held: recording now, to play the moment it's let go.
+    pub quick_recording: bool,
     pub inputs: Vec<Device>,
     pub outputs: Vec<Device>,
     pub asio_drivers: Vec<String>,
@@ -119,6 +123,13 @@ struct Shared {
     /// Push-to-talk bound to a wheel button, and that button held.
     wheel_bound: AtomicBool,
     wheel_held: AtomicBool,
+    /// Push-to-record bound to a wheel button, and that button held; and its keyboard key (0: none).
+    record_wheel_bound: AtomicBool,
+    record_wheel_held: AtomicBool,
+    record_key: AtomicU32,
+    quick_recording: AtomicBool,
+    /// Announcing now (the voice heard, recording, or a recording playing): the music turned down meanwhile.
+    announcing: AtomicBool,
     /// The keyboard's push-to-talk key (a virtual key; 0: none).
     key: AtomicU32,
     talking: AtomicBool,
@@ -144,7 +155,20 @@ impl Shared {
     /// The microphone wanted open: heard always, push-to-talk ready, or recording.
     fn armed(&self) -> bool {
         let settings = self.settings();
-        settings.on || settings.ptt_key.is_some() || self.wheel_bound.load(Ordering::Acquire) || self.state().recording.is_some()
+        settings.on
+            || settings.ptt_key.is_some()
+            || settings.ptr_key.is_some()
+            || self.wheel_bound.load(Ordering::Acquire)
+            || self.record_wheel_bound.load(Ordering::Acquire)
+            || self.state().recording.is_some()
+    }
+
+    /// Push-to-record held now (its key, or its wheel button).
+    fn recording_held(&self) -> bool {
+        let key = self.record_key.load(Ordering::Acquire);
+        // SAFETY: reads the key's state, any thread.
+        let key_held = key != 0 && unsafe { GetAsyncKeyState(key as i32) } as u16 & 0x8000 != 0;
+        key_held || self.record_wheel_held.load(Ordering::Acquire)
     }
 
     /// The microphone heard now: always, or its push-to-talk held.
@@ -174,6 +198,11 @@ impl Announcer {
             generation: AtomicU64::new(0),
             wheel_bound: AtomicBool::new(false),
             wheel_held: AtomicBool::new(false),
+            record_wheel_bound: AtomicBool::new(false),
+            record_wheel_held: AtomicBool::new(false),
+            record_key: AtomicU32::new(0),
+            quick_recording: AtomicBool::new(false),
+            announcing: AtomicBool::new(false),
             key: AtomicU32::new(0),
             talking: AtomicBool::new(false),
             taps: Mutex::new(Vec::new()),
@@ -181,6 +210,8 @@ impl Announcer {
             status: Mutex::new(AnnounceStatus::default()),
             dir,
         });
+        let ducking = shared.clone();
+        let _ = std::thread::Builder::new().name("westplay-duck".into()).spawn(move || duck(&ducking));
         let thread = shared.clone();
         let _ = std::thread::Builder::new().name("westplay-announce".into()).spawn(move || {
             // SAFETY: this thread's COM, once.
@@ -198,6 +229,7 @@ impl Announcer {
                         driver => run_wasapi(&thread, armed, driver == AudioDriver::Exclusive).map_err(|e| e.to_string()),
                     };
                     thread.status().engine = None;
+                    thread.announcing.store(false, Ordering::Release);
                     if let Err(e) = result {
                         log!("announcements: {e}");
                         thread.status().error = Some(e);
@@ -212,7 +244,7 @@ impl Announcer {
     }
 
     /// The companion's settings, and whether push-to-talk has a wheel button.
-    pub fn configure(&self, settings: &AnnounceSettings, wheel_bound: bool) {
+    pub fn configure(&self, settings: &AnnounceSettings, wheel_bound: bool, record_wheel_bound: bool) {
         let mut current = self.shared.settings.lock().unwrap_or_else(|e| e.into_inner());
         if current.on != settings.on {
             log!("announcements: the microphone {}", if settings.on { "on" } else { "off" });
@@ -224,6 +256,13 @@ impl Announcer {
         }
         self.shared.key.store(settings.ptt_key.map_or(0, |key| key.virtual_key()), Ordering::Release);
         self.shared.wheel_bound.store(wheel_bound, Ordering::Release);
+        self.shared.record_key.store(settings.ptr_key.map_or(0, |key| key.virtual_key()), Ordering::Release);
+        self.shared.record_wheel_bound.store(record_wheel_bound, Ordering::Release);
+    }
+
+    /// The wheel's push-to-record button pressed or let go.
+    pub fn wheel_record(&self, held: bool) {
+        self.shared.record_wheel_held.store(held, Ordering::Release);
     }
 
     /// The wheel's push-to-talk button pressed or let go.
@@ -285,7 +324,8 @@ impl Announcer {
             .map(|slot| slot.as_ref().map(|r| (r.samples.len() as f32 / r.rate.max(1) as f32 * 10.0).round() / 10.0))
             .collect();
         status.recording = state.recording.as_ref().map(|(slot, _, _)| *slot);
-        status.playing = state.playing.as_ref().map(|(slot, _, _)| *slot);
+        status.playing = state.playing.as_ref().map(|(slot, _, _)| *slot).filter(|slot| *slot < SLOTS);
+        status.quick_recording = self.shared.quick_recording.load(Ordering::Acquire);
         status.talking = self.shared.talking.load(Ordering::Acquire);
         status
     }
@@ -337,6 +377,8 @@ struct Processor {
     copying: bool,
     copy_voice: Voice,
     copied: Vec<[f32; 2]>,
+    /// Push-to-record's recording while it's held (`None`: not held).
+    quick: Option<Vec<f32>>,
 }
 
 impl Processor {
@@ -349,6 +391,7 @@ impl Processor {
             copying: false,
             copy_voice: Voice::new(rate as f32),
             copied: Vec::new(),
+            quick: None,
         }
     }
 
@@ -364,7 +407,26 @@ impl Processor {
         }
         self.copied.clear();
         let talking = self.shared.talk(settings.on);
+        let held = self.shared.recording_held();
         let mut state = self.shared.state();
+        // Push-to-record: held, the microphone recorded; let go, played through the bus at once (not kept in a slot).
+        match (held, self.quick.take()) {
+            (true, quick) => {
+                let mut samples = quick.unwrap_or_default();
+                if samples.len() as f32 <= LONGEST * self.rate as f32 {
+                    samples.extend_from_slice(input);
+                }
+                self.quick = Some(samples);
+            }
+            (false, Some(samples)) if samples.len() as f32 >= 0.2 * self.rate as f32 => {
+                log!("announcements: push-to-record, {:.1} s, played", samples.len() as f32 / self.rate as f32);
+                state.playing = Some((QUICK, Recording { rate: self.rate, samples: Arc::new(samples) }, 0.0));
+            }
+            _ => {}
+        }
+        self.shared.quick_recording.store(held, Ordering::Release);
+        let announcing = talking || held || state.playing.is_some() || state.recording.is_some();
+        self.shared.announcing.store(announcing, Ordering::Release);
         let full = match &mut state.recording {
             Some((_, samples, rate)) => {
                 *rate = self.rate;
@@ -396,6 +458,111 @@ impl Processor {
             state.playing = None;
         }
     }
+}
+
+/// The music turned down while announcing and back up after: the music's own sound, which Dashly's players' browsers
+/// (its child processes) play, each a Windows audio session of its own, faded to silence in a quarter of a second as
+/// the announcement starts and back to where it was over most of a second, a little after it ends. Dashly's own
+/// sound (the announcement) is another session: untouched.
+fn duck(shared: &Shared) {
+    // SAFETY: this thread's COM, once.
+    let _ = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
+    const STEP: Duration = Duration::from_millis(15);
+    let mut sessions: Vec<(windows::Win32::Media::Audio::ISimpleAudioVolume, f32)> = Vec::new();
+    let mut level = 1.0f32;
+    let mut quiet: Option<Instant> = None;
+    loop {
+        std::thread::sleep(STEP);
+        let on = shared.announcing.load(Ordering::Acquire) && shared.settings().duck;
+        let target = if on {
+            quiet = None;
+            if sessions.is_empty() {
+                sessions = music_sessions();
+            }
+            0.0
+        } else if sessions.is_empty() {
+            continue;
+        } else if quiet.get_or_insert_with(Instant::now).elapsed() < Duration::from_millis(600) {
+            level.min(1.0)
+        } else {
+            1.0
+        };
+        let before = level;
+        level = if target < level { (level - 0.06).max(target) } else { (level + 0.02).min(target) };
+        if level != before {
+            for (volume, was) in &sessions {
+                // SAFETY: a session's volume we hold.
+                let _ = unsafe { volume.SetMasterVolume(was * level, std::ptr::null()) };
+            }
+        }
+        if !on && level >= 1.0 {
+            sessions.clear();
+            quiet = None;
+        }
+    }
+}
+
+/// The audio sessions of Dashly's child processes (its browsers' audio), on every speaker, with their volumes now.
+fn music_sessions() -> Vec<(windows::Win32::Media::Audio::ISimpleAudioVolume, f32)> {
+    use windows::Win32::Media::Audio::{IAudioSessionControl2, IAudioSessionManager2, ISimpleAudioVolume};
+    use windows::Win32::System::Diagnostics::ToolHelp::{
+        CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
+    };
+    let ours = std::process::id();
+    // Every process's parent, to tell Dashly's own (its children's children too) from the rest.
+    let mut parents = std::collections::HashMap::new();
+    // SAFETY: a snapshot of our own, read with an entry of ours, closed once read.
+    unsafe {
+        if let Ok(snapshot) = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) {
+            let mut entry = PROCESSENTRY32W { dwSize: std::mem::size_of::<PROCESSENTRY32W>() as u32, ..Default::default() };
+            let mut more = Process32FirstW(snapshot, &mut entry).is_ok();
+            while more {
+                parents.insert(entry.th32ProcessID, entry.th32ParentProcessID);
+                more = Process32NextW(snapshot, &mut entry).is_ok();
+            }
+            let _ = CloseHandle(snapshot);
+        }
+    }
+    let descends = |mut pid: u32| {
+        if pid == ours || pid == 0 {
+            return false;
+        }
+        for _ in 0..5 {
+            match parents.get(&pid) {
+                Some(&parent) if parent == ours => return true,
+                Some(&parent) if parent != 0 && parent != pid => pid = parent,
+                _ => return false,
+            }
+        }
+        false
+    };
+    let mut found = Vec::new();
+    // SAFETY: COM calls on interfaces we hold.
+    unsafe {
+        let Ok(devices) = CoCreateInstance::<_, IMMDeviceEnumerator>(&MMDeviceEnumerator, None, CLSCTX_ALL) else {
+            return found;
+        };
+        let Ok(collection) = devices.EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE) else { return found };
+        for i in 0..collection.GetCount().unwrap_or(0) {
+            let Ok(device) = collection.Item(i) else { continue };
+            let Ok(manager) = device.Activate::<IAudioSessionManager2>(CLSCTX_ALL, None) else { continue };
+            let Ok(list) = manager.GetSessionEnumerator() else { continue };
+            for j in 0..list.GetCount().unwrap_or(0) {
+                let Ok(session) = list.GetSession(j) else { continue };
+                let Ok(session) = session.cast::<IAudioSessionControl2>() else { continue };
+                let Ok(pid) = session.GetProcessId() else { continue };
+                if !descends(pid) {
+                    continue;
+                }
+                if let Ok(volume) = session.cast::<ISimpleAudioVolume>()
+                    && let Ok(was) = volume.GetMasterVolume()
+                {
+                    found.push((volume, was));
+                }
+            }
+        }
+    }
+    found
 }
 
 /// The engine runs on while it's needed as it is: the microphone wanted as when it started (or playing without),
@@ -1054,6 +1221,12 @@ struct Voice {
     hiss: f32,
     crackle: f32,
     noise: u32,
+    /// An old unit's bass, apart: its low end driven into the cone's rattle (clipped unevenly, a buzz), how hard,
+    /// and how much of it comes back in.
+    bass_in: Biquad,
+    bass_out: [Biquad; 2],
+    bass_drive: f32,
+    bass_mix: f32,
     /// The voice's last 150 ms, for the further units.
     history: Vec<f32>,
     written: usize,
@@ -1072,6 +1245,10 @@ impl Voice {
             hiss: 0.0,
             crackle: 0.0,
             noise: 0x1234_5678,
+            bass_in: Biquad::new(rate, 200.0, false),
+            bass_out: [Biquad::new(rate, 1500.0, false), Biquad::new(rate, 45.0, true)],
+            bass_drive: 1.0,
+            bass_mix: 0.0,
             history: vec![0.0; (rate * 0.15) as usize + 1],
             written: 0,
             taps: Vec::new(),
@@ -1088,17 +1265,20 @@ impl Voice {
         self.quality = Some(quality);
         let new = quality.min(100) as f32 / 100.0;
         let old = 1.0 - new;
-        // The band: 450 Hz to 2.8 kHz worn out, 90 Hz to 14 kHz new (by octaves between).
-        let low = 450.0 * (90.0f32 / 450.0).powf(new);
-        let high = 2800.0 * (14_000.0f32 / 2800.0).powf(new);
+        // The band: 250 Hz to 7 kHz worn out, 90 Hz to 14 kHz new (by octaves between); worn, a shrill peak where
+        // the ear is sharpest (3 kHz) and a tired cone's honk under it.
+        let low = 250.0 * (90.0f32 / 250.0).powf(new);
+        let high = 7000.0 * (14_000.0f32 / 7000.0).powf(new);
         self.filters = [
             Biquad::new(self.rate, low, true),
-            Biquad::new(self.rate, low, true),
             Biquad::new(self.rate, high, false),
-            // A tired cone's honk.
-            Biquad::bell(self.rate, 1600.0, 1.4, 9.0 * old),
+            Biquad::bell(self.rate, 3000.0, 1.2, 11.0 * old),
+            Biquad::bell(self.rate, 1400.0, 1.4, 4.0 * old),
         ];
-        self.drive = 1.0 + 5.0 * old * old + 0.6 * old;
+        self.drive = 1.0 + 0.6 * old + 3.0 * old * old;
+        // The bass, worn: overdriven into a buzz, as much as the speakers are old.
+        self.bass_drive = 1.0 + 11.0 * old;
+        self.bass_mix = 0.9 * old;
         self.hiss = 0.006 * old * old;
         // Crackle only from really worn ones: at most about once a second.
         self.crackle = 0.00002 * ((old - 0.6).max(0.0) / 0.4).powi(2);
@@ -1141,12 +1321,20 @@ impl Voice {
 
     /// The voice's next sample; `active`: the PA heard (its hiss only then).
     fn play(&mut self, x: f32, active: bool) -> [f32; 2] {
-        let mut v = x * 2.0;
+        let x = x * 2.0;
+        let mut v = x;
         for filter in &mut self.filters {
             v = filter.step(v);
         }
         // A PA's units, driven as hard as they're worn; an old one's hiss, and now and then its crackle.
         let mut v = (v * self.drive).tanh() / self.drive.tanh().max(0.5);
+        // Its bass: clipped unevenly (the cone hitting its stops), the buzz above it kept.
+        if self.bass_mix > 0.0 {
+            let bass = (self.bass_in.step(x) * self.bass_drive).clamp(-0.35, 0.22);
+            let bass = self.bass_out[0].step(bass);
+            let bass = self.bass_out[1].step(bass);
+            v += bass * self.bass_mix;
+        }
         if self.hiss > 0.0 && active {
             v += self.noise() * self.hiss;
             if self.noise() > 1.0 - self.crackle * 2.0 {

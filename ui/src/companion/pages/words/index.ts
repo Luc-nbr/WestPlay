@@ -181,6 +181,10 @@ export interface CompanionWords {
     wheelSub: string
     announceSub: string
     audioSub: string
+    pushToRecord: string
+    pushToRecordDetail: string
+    duck: string
+    duckDetail: string
     wheelNote: string
     inUse: string
   }

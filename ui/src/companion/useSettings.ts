@@ -60,6 +60,10 @@ export interface Settings {
     quality: number
     /** Push-to-talk on the keyboard or mouse. */
     pttKey: KeyCode | null
+    /** Push-to-record: recorded while held, played the moment it's let go. */
+    ptrKey: KeyCode | null
+    /** The music turned down while announcing. */
+    duck: boolean
     /** The audio, as a DAW's: driver, devices (Windows ids; null: the default), ASIO driver and channels, buffer. */
     driver: AudioDriver
     input: string | null
@@ -94,6 +98,8 @@ export const DEFAULT_ANNOUNCE: Settings['announce'] = {
   volume: 80,
   quality: 60,
   pttKey: null,
+  ptrKey: null,
+  duck: true,
   driver: 'wasapi',
   input: null,
   output: null,
@@ -134,6 +140,7 @@ export type ControllerAction =
   | 'brightnessUp'
   | 'announce'
   | 'pushToTalk'
+  | 'pushToRecord'
   | 'slot1'
   | 'slot2'
   | 'slot3'
@@ -150,6 +157,7 @@ export const CONTROLLER_ACTIONS: ControllerAction[] = [
   'brightnessDown',
   'brightnessUp',
   'pushToTalk',
+  'pushToRecord',
   'announce',
   'slot1',
   'slot2',

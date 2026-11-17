@@ -295,6 +295,7 @@ function WheelButtons({
     brightnessDown: w.brightnessDown,
     brightnessUp: w.brightnessUp,
     pushToTalk: w.pushToTalk,
+    pushToRecord: w.pushToRecord,
     announce: w.announce,
     slot1: w.playSlot.replace('{n}', '1'),
     slot2: w.playSlot.replace('{n}', '2'),
@@ -378,6 +379,7 @@ function Announce({
   const slots = status?.announce ?? { slots: [null, null, null, null, null, null], recording: null, playing: null }
   const words = useWords()
   const [listening, setListening] = useState(false)
+  const [listeningRecord, setListeningRecord] = useState(false)
   const press = (slot: number, action: string) => void call('announce_slot', { slot, action })
   const announce: Settings['announce'] = { ...DEFAULT_ANNOUNCE, ...settings.announce }
   const [quality, setQuality] = useState(announce.quality)
@@ -407,6 +409,17 @@ function Announce({
           }
         />
         <Row
+          title={w.duck}
+          detail={w.duckDetail}
+          accessory={
+            <Switch
+              on={announce.duck}
+              label={w.duck}
+              change={(duck) => update({ ...settings, announce: { ...announce, duck } })}
+            />
+          }
+        />
+        <Row
           title={w.pushToTalk}
           detail={status?.announce?.talking ? w.talkingNow : w.pushToTalkDetail}
           accessory={
@@ -431,6 +444,38 @@ function Announce({
                   listening={listening}
                   listen={setListening}
                   choose={(binding) => update({ ...settings, announce: { ...announce, pttKey: binding.key } })}
+                  words={words}
+                  pressKey={w.pressKey}
+                />
+              )}
+            </span>
+          }
+        />
+        <Row
+          title={w.pushToRecord}
+          detail={status?.announce?.quickRecording ? w.recordingNow : w.pushToRecordDetail}
+          accessory={
+            <span style={{ display: 'flex', gap: 8 }}>
+              {announce.ptrKey !== null && !listeningRecord && (
+                <button
+                  type="button"
+                  className="ob-button cp-keybind"
+                  onClick={() => update({ ...settings, announce: { ...announce, ptrKey: null } })}
+                >
+                  {w.wheelClear}
+                </button>
+              )}
+              {announce.ptrKey === null && !listeningRecord ? (
+                <button type="button" className="ob-button cp-keybind" onClick={() => setListeningRecord(true)}>
+                  {w.wheelChoose}
+                </button>
+              ) : (
+                <KeyButton
+                  binding={{ key: announce.ptrKey ?? 0, withInteractionKey: false }}
+                  label={w.pushToRecord}
+                  listening={listeningRecord}
+                  listen={setListeningRecord}
+                  choose={(binding) => update({ ...settings, announce: { ...announce, ptrKey: binding.key } })}
                   words={words}
                   pressKey={w.pressKey}
                 />

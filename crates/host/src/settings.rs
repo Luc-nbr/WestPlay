@@ -95,6 +95,11 @@ pub struct AnnounceSettings {
     pub quality: u32,
     /// Push-to-talk on the keyboard (or the mouse): the microphone heard while it's held.
     pub ptt_key: Option<KeyCode>,
+    /// Push-to-record on the keyboard (or the mouse): recorded while it's held, played through the bus the moment
+    /// it's let go.
+    pub ptr_key: Option<KeyCode>,
+    /// The music turned down while announcing (live, push-to-record, a slot playing), and back up after.
+    pub duck: bool,
     /// The audio, as a DAW's: the driver, the devices (by their Windows ids; `None`: Windows' default), the ASIO
     /// driver and its input and first output channel (0 = the first), and the buffer (frames).
     pub driver: AudioDriver,
@@ -117,6 +122,8 @@ impl Default for AnnounceSettings {
             volume: 80,
             quality: 60,
             ptt_key: None,
+            ptr_key: None,
+            duck: true,
             driver: AudioDriver::Wasapi,
             input: None,
             output: None,

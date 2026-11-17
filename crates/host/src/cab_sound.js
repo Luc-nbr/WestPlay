@@ -73,12 +73,14 @@ window.westplayCabSound = (media, say) => {
     const { currentTime } = audio.context
     const { highpass, lowpass, honk, shaper, gain, hiss } = audio.wear
     const glide = (param, value) => param.setTargetAtTime(value, currentTime, 0.05)
-    for (const filter of highpass) glide(filter.frequency, old ? 20 * (350 / 20) ** old : 10)
-    glide(lowpass.frequency, old ? 20000 * (3500 / 20000) ** old : 22000)
-    glide(honk.gain, 9 * old)
-    glide(gain.gain, 10 ** ((-4.5 * old) / 20))
+    for (const filter of highpass) glide(filter.frequency, old ? 20 * (220 / 20) ** old : 10)
+    glide(lowpass.frequency, old ? 20000 * (7000 / 20000) ** old : 22000)
+    glide(honk.gain, 11 * old)
+    glide(gain.gain, 10 ** ((-6 * old) / 20))
     glide(hiss.gain, 0.004 * old * old)
-    const drive = 1 + 0.6 * old + 5 * old * old
+    glide(audio.wear.bassDrive.gain, 1 + 11 * old)
+    glide(audio.wear.bassMix.gain, 0.8 * old)
+    const drive = 1 + 0.6 * old + 3 * old * old
     if (old === 0) shaper.curve = null
     else {
       const curve = new Float32Array(1024)
@@ -210,7 +212,8 @@ window.westplayCabSound = (media, say) => {
     // Then the speakers' wear.
     const highpass = [0, 1].map(() => keep(new BiquadFilterNode(context, { type: 'highpass', frequency: 10, Q: Math.SQRT1_2 })))
     const lowpass = keep(new BiquadFilterNode(context, { type: 'lowpass', frequency: 22000, Q: Math.SQRT1_2 }))
-    const honk = keep(new BiquadFilterNode(context, { type: 'peaking', frequency: 1600, Q: 1.4, gain: 0 }))
+    // Worn: shrill, a peak where the ear is sharpest.
+    const honk = keep(new BiquadFilterNode(context, { type: 'peaking', frequency: 3000, Q: 1.2, gain: 0 }))
     const shaper = keep(new WaveShaperNode(context, { oversample: '2x' }))
     const worn = keep(new GainNode(context))
     const noise = context.createBuffer(1, context.sampleRate * 2, context.sampleRate)
@@ -227,7 +230,22 @@ window.westplayCabSound = (media, say) => {
     lowpass.connect(honk)
     honk.connect(shaper)
     shaper.connect(worn)
-    audio.wear = { highpass, lowpass, honk, shaper, gain: worn, hiss }
+    // Worn, the bass apart: overdriven and clipped unevenly (the cone hitting its stops), its buzz kept.
+    const bassIn = keep(new BiquadFilterNode(context, { type: 'lowpass', frequency: 200, Q: Math.SQRT1_2 }))
+    const bassDrive = keep(new GainNode(context, { gain: 1 }))
+    const rattle = keep(new WaveShaperNode(context, { oversample: '2x' }))
+    const clipped = new Float32Array(1024)
+    for (let i = 0; i < clipped.length; i++) clipped[i] = Math.min(0.22, Math.max(-0.35, (i / (clipped.length - 1)) * 2 - 1))
+    rattle.curve = clipped
+    const buzz = keep(new BiquadFilterNode(context, { type: 'lowpass', frequency: 1500, Q: Math.SQRT1_2 }))
+    const bassMix = keep(new GainNode(context, { gain: 0 }))
+    trim.connect(bassIn)
+    bassIn.connect(bassDrive)
+    bassDrive.connect(rattle)
+    rattle.connect(buzz)
+    buzz.connect(bassMix)
+    bassMix.connect(worn)
+    audio.wear = { highpass, lowpass, honk, shaper, gain: worn, hiss, bassDrive, bassMix }
     setWear()
     // Beside it, the spectrum's ear (measuring, playing nothing).
     audio.analyser = keep(new AnalyserNode(context, { fftSize: 4096, smoothingTimeConstant: 0.5, minDecibels: -80, maxDecibels: -22 }))

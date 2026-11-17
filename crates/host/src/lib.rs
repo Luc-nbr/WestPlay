@@ -781,7 +781,11 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
         if applied_settings != Some(config.settings.generation()) {
             applied_settings = Some(config.settings.generation());
             let current = config.settings.get();
-            announcer.configure(&current.announce, current.controller.contains_key("pushToTalk"));
+            announcer.configure(
+                &current.announce,
+                current.controller.contains_key("pushToTalk"),
+                current.controller.contains_key("pushToRecord"),
+            );
             // The player may have chosen another GPU: the list again too (an external GPU plugged in).
             let graphics = config.settings.get().graphics;
             if graphics.gpu != chosen_gpu {
@@ -831,6 +835,10 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     // Push-to-talk: held, and let go; everything else as it's pressed.
                     if action == "pushToTalk" {
                         announcer.wheel_talk(press.down);
+                        continue;
+                    }
+                    if action == "pushToRecord" {
+                        announcer.wheel_record(press.down);
                         continue;
                     }
                     if !press.down {

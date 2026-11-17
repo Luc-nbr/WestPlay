@@ -58,6 +58,8 @@ export interface HostStatus {
     playing: number | null
     /** The microphone heard now (always on, or push-to-talk held). */
     talking: boolean
+    /** Push-to-record held: recording now. */
+    quickRecording: boolean
     inputs: { id: string; name: string }[]
     outputs: { id: string; name: string }[]
     asioDrivers: string[]
