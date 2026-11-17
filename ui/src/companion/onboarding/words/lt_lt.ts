@@ -172,6 +172,12 @@ export const words: Words = {
     finishInWindow: 'Užbaik prisijungimą „Spotify“ lange',
     signingIn: { title: 'Jungiamasi prie „Spotify“', text: 'Tęsk „Spotify“ lange' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Prisijunk prie „Apple Music“',
     sub: 'Neprivaloma. Prisijungus „Apple Music“ groja sunkvežimio ekrane su tavo grojaraščiais ir biblioteka. Prie „Apple Music“ jungiesi atskirame lange, o Dashly tavo prisijungimo duomenų niekada nemato.',

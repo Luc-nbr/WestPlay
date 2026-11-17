@@ -6,7 +6,6 @@ import { n, useWords } from '../room/room'
 import { GLOW, openAndClose, useScreenAt, useTour } from '../room/screen'
 import {
   type Binding,
-  CONTROLLER_ACTIONS,
   type ControllerAction,
   DEFAULT_ANNOUNCE,
   DEFAULT_KEY,
@@ -24,7 +23,7 @@ import type { PageProps } from './page'
  * screen's key, any key, held or pressed once, and the music's volume and play/pause. On the room's screen
  * the pointer uses it, opening an app and coming back Home, again and again.
  */
-export function Controls({ settings: state, cw }: PageProps) {
+export function Controls({ settings: state, status, cw }: PageProps) {
   const w = cw.controls
   const { settings, update, error } = state
   useScreenAt('home', GLOW.home, null)
@@ -63,20 +62,7 @@ export function Controls({ settings: state, cw }: PageProps) {
           />
         </Group>
       )}
-      {settings && <Keybinds settings={settings} update={update} w={w} />}
-      {error && <Note tone="bad">{error}</Note>}
-    </Panel>
-  )
-}
-
-/** The wheel's buttons (a Moza's rim, a button box): each bound to what Dashly does. */
-export function WheelPage({ settings: state, status, cw }: PageProps) {
-  const w = cw.controls
-  const { settings, update, error } = state
-  useScreenAt('home', GLOW.home, null)
-  return (
-    <Panel place="page" title={w.wheelButtons} sub={w.wheelSub}>
-      {settings && <WheelButtons settings={settings} update={update} status={status} w={w} />}
+      {settings && <Keybinds settings={settings} update={update} status={status} w={w} />}
       {error && <Note tone="bad">{error}</Note>}
     </Panel>
   )
@@ -125,12 +111,15 @@ export function AudioPage({ settings: state, status, cw }: PageProps) {
 function Keybinds({
   settings,
   update,
+  status,
   w,
 }: {
   settings: Settings
   update(settings: Settings): void
+  status: PageProps['status']
   w: PageProps['cw']['controls']
 }) {
+  const wheel = { settings, update, status, w }
   const words = useWords()
   const [listening, setListening] = useState<KeybindId | 'screen' | null>(null)
   const [refused, setRefused] = useState<string | null>(null)
@@ -205,19 +194,24 @@ function Keybinds({
             key={id}
             title={names[id]}
             accessory={
-              <KeyButton
-                binding={settings.keybinds[id]}
-                with={screenKey}
-                label={names[id]}
-                listening={listening === id}
-                listen={listen(id)}
-                choose={choose(id)}
-                words={words}
-                pressKey={w.pressKey}
-              />
+              <span className="dashly-binds">
+                <KeyButton
+                  binding={settings.keybinds[id]}
+                  with={screenKey}
+                  label={names[id]}
+                  listening={listening === id}
+                  listen={listen(id)}
+                  choose={choose(id)}
+                  words={words}
+                  pressKey={w.pressKey}
+                />
+                <WheelBind action={id} {...wheel} />
+              </span>
             }
           />
         ))}
+        <Row title={w.nextTrack} accessory={<WheelBind action="nextTrack" {...wheel} />} />
+        <Row title={w.previousTrack} accessory={<WheelBind action="previousTrack" {...wheel} />} />
       </Group>
       <Note tone={refused ? 'bad' : 'calm'}>{refused ?? w.keybindsNote.replaceAll('{key}', keyName)}</Note>
     </>
@@ -269,98 +263,67 @@ function SpeedRow({
 }
 
 /**
- * The wheel's buttons (a Moza's rim, a button box: any controller Windows has): each of the keybinds' actions, and
- * the next and previous song, on a button of the player's. Choose one, then press the button on the wheel: the next
- * button pressed is taken (WestPlay reads the controllers: westplay_host::controller).
+ * A wheel button (a Moza's rim, a button box: any controller Windows has) for `action`, beside its key wherever a key
+ * is bound: a round button with a wheel. Click it, then press the button on the wheel; right-click clears it. A
+ * button does one thing: taken from whatever had it (WestPlay reads the controllers: westplay_host::controller).
  */
-function WheelButtons({
+function WheelBind({
+  action,
   settings,
   update,
   status,
   w,
 }: {
+  action: ControllerAction
   settings: Settings
   update(settings: Settings): void
   status: PageProps['status']
   w: PageProps['cw']['controls']
 }) {
-  const [learning, setLearning] = useState<{ action: ControllerAction; from: number } | null>(null)
+  const [learning, setLearning] = useState<number | null>(null)
   const press = status?.controllerPress ?? null
-  const names: Record<ControllerAction, string> = {
-    volumeUp: w.volumeUp,
-    volumeDown: w.volumeDown,
-    playPause: w.playPause,
-    nextTrack: w.nextTrack,
-    previousTrack: w.previousTrack,
-    brightnessDown: w.brightnessDown,
-    brightnessUp: w.brightnessUp,
-    pushToTalk: w.pushToTalk,
-    pushToRecord: w.pushToRecord,
-    announce: w.announce,
-    slot1: w.playSlot.replace('{n}', '1'),
-    slot2: w.playSlot.replace('{n}', '2'),
-    slot3: w.playSlot.replace('{n}', '3'),
-    slot4: w.playSlot.replace('{n}', '4'),
-    slot5: w.playSlot.replace('{n}', '5'),
-    slot6: w.playSlot.replace('{n}', '6'),
-  }
+  const bound = settings.controller?.[action]
   useEffect(() => {
-    if (!learning || !press || press.count <= learning.from) return
+    if (learning === null || !press || press.count <= learning) return
     const button = { device: press.device, name: press.name, button: press.button }
-    // A button does one thing: taken from whatever had it.
     const controller = Object.fromEntries(
       Object.entries(settings.controller ?? {}).filter(
         ([, other]) => !(other && other.device === button.device && other.button === button.button),
       ),
     )
-    update({ ...settings, controller: { ...controller, [learning.action]: button } })
+    update({ ...settings, controller: { ...controller, [action]: button } })
     setLearning(null)
-  }, [learning, press, settings, update])
+  }, [learning, press, settings, update, action])
+  const title =
+    learning !== null
+      ? w.wheelPress
+      : bound
+        ? `${w.wheelButton.replaceAll('{name}', bound.name).replaceAll('{n}', String(bound.button))} \u2014 ${w.wheelClearHint}`
+        : w.wheelChooseHint
   return (
-    <>
-      <Group title={w.wheelButtons} place={7}>
-        {CONTROLLER_ACTIONS.map((action) => {
-          const bound = settings.controller?.[action]
-          const listening = learning?.action === action
-          return (
-            <Row
-              key={action}
-              title={names[action]}
-              detail={
-                bound
-                  ? w.wheelButton.replaceAll('{name}', bound.name).replaceAll('{n}', String(bound.button))
-                  : w.wheelNone
-              }
-              accessory={
-                <span style={{ display: 'flex', gap: 8 }}>
-                  {bound && !listening && (
-                    <button
-                      type="button"
-                      className="ob-button cp-keybind"
-                      onClick={() => {
-                        const controller = { ...settings.controller }
-                        delete controller[action]
-                        update({ ...settings, controller })
-                      }}
-                    >
-                      {w.wheelClear}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="ob-button cp-keybind"
-                    onClick={() => setLearning(listening ? null : { action, from: press?.count ?? 0 })}
-                  >
-                    {listening ? w.wheelPress : w.wheelChoose}
-                  </button>
-                </span>
-              }
-            />
-          )
-        })}
-      </Group>
-      <Note tone="calm">{w.wheelNote}</Note>
-    </>
+    <button
+      type="button"
+      className="dashly-wheel"
+      data-bound={bound ? '' : undefined}
+      data-learning={learning !== null ? '' : undefined}
+      title={title}
+      aria-label={title}
+      onClick={() => setLearning(learning !== null ? null : (press?.count ?? 0))}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        if (!bound) return
+        const controller = { ...settings.controller }
+        delete controller[action]
+        update({ ...settings, controller })
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8.5" />
+        <circle cx="12" cy="12" r="2.2" />
+        <path d="M3.8 10.5h6M14.2 10.5h6M12 14.2v6.3" />
+      </svg>
+      {bound && <b>{bound.button}</b>}
+    </button>
   )
 }
 
@@ -401,11 +364,14 @@ function Announce({
           title={w.announceOn}
           detail={w.announceDetail}
           accessory={
-            <Switch
-              on={announce.on}
-              label={w.announceOn}
-              change={(on) => update({ ...settings, announce: { ...announce, on } })}
-            />
+            <span className="dashly-binds">
+              <WheelBind action="announce" settings={settings} update={update} status={status} w={w} />
+              <Switch
+                on={announce.on}
+                label={w.announceOn}
+                change={(on) => update({ ...settings, announce: { ...announce, on } })}
+              />
+            </span>
           }
         />
         <Row
@@ -448,6 +414,7 @@ function Announce({
                   pressKey={w.pressKey}
                 />
               )}
+              <WheelBind action="pushToTalk" settings={settings} update={update} status={status} w={w} />
             </span>
           }
         />
@@ -480,6 +447,7 @@ function Announce({
                   pressKey={w.pressKey}
                 />
               )}
+              <WheelBind action="pushToRecord" settings={settings} update={update} status={status} w={w} />
             </span>
           }
         />
@@ -528,6 +496,13 @@ function Announce({
               detail={recording ? w.recordingNow : length === null ? w.slotEmpty : `${length.toFixed(1)} s`}
               accessory={
                 <span className="dashly-slot">
+                  <WheelBind
+                    action={`slot${slot + 1}` as ControllerAction}
+                    settings={settings}
+                    update={update}
+                    status={status}
+                    w={w}
+                  />
                   {length !== null && !recording && (
                     <button
                       type="button"

@@ -11,6 +11,7 @@ describe('the apps this release has', () => {
       'youtubeMusic',
       'player',
       'safari',
+      'discord',
       'phone',
       'messages',
       'calendar',

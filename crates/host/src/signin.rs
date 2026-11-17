@@ -98,6 +98,16 @@ pub const APPLE_MUSIC: Site = Site {
     not_yet: None,
     page_says: Some(include_str!("apple_music_sign_in.js")),
 };
+/// Discord's sign-in, on Safari's profile (the cab's Discord app is a Safari page): its login page, which says once
+/// it's in the app (`discord_sign_in.js`: Discord changes its address without loading a page).
+pub const DISCORD: Site = Site {
+    sign_in: "https://discord.com/login",
+    title: "Sign in to Discord - Dashly",
+    home: "https://discord.com/channels/",
+    not_yet: None,
+    page_says: Some(include_str!("discord_sign_in.js")),
+};
+
 const CLASS: windows::core::PCWSTR = w!("WestPlaySignIn");
 const SIZE: (i32, i32) = (520, 760);
 /// Windows' message for the mouse leaving a window that asked to be told (its value, from WinUser.h).

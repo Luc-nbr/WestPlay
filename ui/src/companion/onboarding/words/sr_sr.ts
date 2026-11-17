@@ -172,6 +172,12 @@ export const words: Words = {
     finishInWindow: 'Довршите пријаву у Spotify прозору',
     signingIn: { title: 'Пријава на Spotify', text: 'Наставите у Spotify прозору' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Пријава на Apple Music',
     sub: 'Опционално. Пријавите се да бисте на екрану камиона слушали Apple Music, са својим плејлистама и библиотеком. На Apple Music се пријављујете у засебном прозору, а Dashly никада не види ваш налог.',

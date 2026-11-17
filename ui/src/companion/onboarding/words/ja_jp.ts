@@ -168,6 +168,12 @@ export const words: Words = {
     finishInWindow: 'Spotify のウィンドウでログインを完了してください',
     signingIn: { title: 'Spotify にログインしています', text: 'Spotify のウィンドウで続けてください' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Apple Music にログイン',
     sub: '任意です。ログインすると、自分のプレイリストやライブラリの Apple Music をトラックの画面で聴けます。ログインは Apple Music の別ウィンドウで行うため、Dashly がアカウント情報を見ることはありません。',

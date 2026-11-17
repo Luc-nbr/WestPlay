@@ -179,6 +179,8 @@ function status(): HostStatus {
     youtubeSigningIn: accounts.signingIn === 'youtube',
     spotifySignedIn: accounts.spotify,
     spotifySigningIn: accounts.signingIn === 'spotify',
+    discordSignedIn: null,
+    discordSigningIn: false,
     appleMusicSignedIn: accounts.appleMusic,
     appleMusicSigningIn: accounts.signingIn === 'appleMusic',
     map,

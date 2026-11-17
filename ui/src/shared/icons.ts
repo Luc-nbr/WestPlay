@@ -20,6 +20,7 @@ export type AppIconRole =
   | 'youtubeMusic'
   | 'player'
   | 'safari'
+  | 'discord'
 
 /** Each role's files' name. */
 const FILES: Record<AppIconRole, string> = {
@@ -36,6 +37,7 @@ const FILES: Record<AppIconRole, string> = {
   youtubeMusic: 'youtube-music',
   player: 'player',
   safari: 'safari',
+  discord: 'discord',
 }
 
 /** WestPlay's own icon for `role`, for a light or a dark screen. */

@@ -105,6 +105,9 @@ function WestPlayIntro() {
       <span ref={wordmark} className="boot-intro-wordmark">
         Dashly
       </span>
+      <span className="boot-intro-powered">
+        powered by <b>MOF Technologies</b>
+      </span>
     </div>
   )
 }

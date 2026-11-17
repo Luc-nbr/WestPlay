@@ -182,6 +182,8 @@ export const words: CompanionWords = {
     pushToRecordDetail: "Houd vast om op te nemen, laat los en hij speelt meteen door de bus; een stuurknop kan ook (Stuurknoppen)",
     duck: "Muziek uit tijdens omroep",
     duckDetail: "De muziek fadet weg zodra je omroept, en komt terug als je klaar bent",
+    wheelChooseHint: "Stuurknop koppelen: klik, druk dan op de knop",
+    wheelClearHint: "rechtsklik om te wissen",
     wheelNote: "Klik op Kiezen en druk dan op de knop op je stuur of knoppenbak. Een knop doet één ding; hij werkt zolang Dashly draait.",
     inUse: 'Die toets wordt al gebruikt voor {action}.',
   },

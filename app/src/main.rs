@@ -139,6 +139,21 @@ fn announce_slot(slot: usize, action: String) {
 }
 
 #[tauri::command]
+fn discord_sign_in(accounts: State<Accounts>) {
+    accounts.0.discord.request(AccountAction::SignIn);
+}
+
+#[tauri::command]
+fn discord_sign_out(accounts: State<Accounts>) {
+    accounts.0.discord.request(AccountAction::SignOut);
+}
+
+#[tauri::command]
+fn discord_check(accounts: State<Accounts>) {
+    accounts.0.discord.request(AccountAction::Check);
+}
+
+#[tauri::command]
 fn open_support_page() {
     westplay_host::browser::open(SUPPORT_PAGE);
 }
@@ -230,6 +245,9 @@ fn main() {
             apple_music_sign_out,
             apple_music_check,
             open_support_page,
+            discord_sign_in,
+            discord_sign_out,
+            discord_check,
             announce_slot,
             open_social,
             app_log_place,

@@ -494,6 +494,7 @@ export const strings: Strings = {
     youtubeMusic: 'YouTube Music',
     player: 'Player',
     safari: 'Safari',
+    discord: 'Discord',
     podcasts: 'Podcast',
     phone: '電話',
     messages: 'メッセージ',

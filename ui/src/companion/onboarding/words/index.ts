@@ -177,6 +177,13 @@ export interface Words {
     finishInWindow: string
     signingIn: Note
   }
+  /** Discord's sign-in (the cab's Discord app), as Spotify's. */
+  discord: {
+    title: string
+    sub: string
+    finishInWindow: string
+    signingIn: Note
+  }
   /** Apple Music's sign-in step, as Spotify's. */
   appleMusic: {
     title: string

@@ -173,6 +173,12 @@ export const words: Words = {
     finishInWindow: 'Pabeidz pieteikšanos Spotify logā',
     signingIn: { title: 'Pieteikšanās Spotify', text: 'Turpini Spotify logā' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Pierakstīšanās Apple Music',
     sub: 'Nav obligāti. Kad pierakstīsies, Apple Music skanēs automobiļa ekrānā ar taviem atskaņošanas sarakstiem un bibliotēku. Apple Music kontā pierakstās atsevišķā logā, un Dashly tavus pierakstīšanās datus nekad neredz.',

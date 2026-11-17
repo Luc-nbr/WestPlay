@@ -8,6 +8,7 @@ import { useLanguage, useText } from '../state/text'
 import { isCopied, noteOpened, openedBefore, saveCopy, savedCopy } from './launchCopies'
 import { MusicApp } from './music/MusicApp'
 import { PlayerApp } from './player/PlayerApp'
+import { DiscordApp } from './discord/DiscordApp'
 import { SafariApp } from './safari/SafariApp'
 import { SettingsApp } from './settings/SettingsApp'
 import { SpotifyApp } from './spotify/SpotifyApp'
@@ -96,6 +97,8 @@ function AppContent({ app }: { app: AppId }) {
       return <PlayerApp />
     case 'safari':
       return <SafariApp />
+    case 'discord':
+      return <DiscordApp />
     default:
       return <NotBuiltYet app={app} />
   }

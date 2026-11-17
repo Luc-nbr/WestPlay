@@ -406,8 +406,9 @@ impl Processor {
             self.copy_voice.set_taps(&self.shared.taps.lock().unwrap_or_else(|e| e.into_inner()));
         }
         self.copied.clear();
-        let talking = self.shared.talk(settings.on);
         let held = self.shared.recording_held();
+        // Push-to-record held: nothing heard live, only its playback once let go.
+        let talking = self.shared.talk(settings.on) && !held;
         let mut state = self.shared.state();
         // Push-to-record: held, the microphone recorded; let go, played through the bus at once (not kept in a slot).
         match (held, self.quick.take()) {

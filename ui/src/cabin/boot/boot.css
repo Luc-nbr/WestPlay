@@ -139,3 +139,34 @@
   text-transform: lowercase;
   letter-spacing: -0.02em;
 }
+
+/* "powered by MOF Technologies": under the pair, rising in once Dashly's name is out, leaving with it. */
+.boot-intro {
+  position: relative;
+}
+
+.boot-intro-powered {
+  position: absolute;
+  top: calc(100% + 28px * var(--text-scale, 1));
+  left: 50%;
+  translate: -50% 0;
+  font-size: calc(22px * var(--text-scale, 1));
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 0.62);
+  white-space: nowrap;
+  animation: powered-in 700ms var(--motion-ease) 1000ms both;
+}
+
+.boot-intro-powered b {
+  font-weight: 700;
+  color: #fff;
+}
+
+@keyframes powered-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(6px);
+  }
+}

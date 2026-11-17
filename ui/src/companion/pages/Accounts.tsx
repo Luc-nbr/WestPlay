@@ -9,6 +9,8 @@ import {
   type HostStatus,
   appleMusicSignIn,
   appleMusicSignOut,
+  discordSignIn,
+  discordSignOut,
   spotifySignIn,
   spotifySignOut,
   youtubeSignIn,
@@ -57,9 +59,18 @@ const SERVICES: Record<
     signingIn: (status) => status?.appleMusicSigningIn ?? false,
     words: (words) => words.appleMusic,
   },
+  discord: {
+    name: 'Discord',
+    app: 'discord',
+    glow: GLOW.home,
+    signIn: discordSignIn,
+    signOut: discordSignOut,
+    signingIn: (status) => status?.discordSigningIn ?? false,
+    words: (words) => words.discord,
+  },
 }
 
-const ORDER: Service[] = ['youtube', 'spotify', 'appleMusic']
+const ORDER: Service[] = ['youtube', 'spotify', 'appleMusic', 'discord']
 
 /**
  * The services WestPlay plays from, each signed in (in its own window, on the desktop) or not. WestPlay only

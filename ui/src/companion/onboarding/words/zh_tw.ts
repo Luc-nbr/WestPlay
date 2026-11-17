@@ -166,6 +166,12 @@ export const words: Words = {
     finishInWindow: '請在 Spotify 視窗中完成登入',
     signingIn: { title: '正在登入 Spotify', text: '請在 Spotify 視窗中繼續' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: '登入 Apple Music',
     sub: '選用。登入後，就能在卡車螢幕上用自己的播放列表和資料庫收聽 Apple Music。登入會在獨立的 Apple Music 視窗中進行，Dashly 看不到你的帳戶資訊。',

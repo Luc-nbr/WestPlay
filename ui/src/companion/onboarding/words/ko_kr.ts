@@ -167,6 +167,12 @@ export const words: Words = {
     finishInWindow: 'Spotify 창에서 로그인을 마치세요',
     signingIn: { title: 'Spotify에 로그인하는 중', text: 'Spotify 창에서 계속하세요' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Apple Music에 로그인',
     sub: '선택 사항이에요. 로그인하면 내 플레이리스트와 보관함으로 트럭 화면에서 Apple Music을 들을 수 있어요. 로그인은 별도의 Apple Music 창에서 하므로 Dashly는 계정 정보를 볼 수 없어요.',

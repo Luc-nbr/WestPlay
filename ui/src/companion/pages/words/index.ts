@@ -185,6 +185,8 @@ export interface CompanionWords {
     pushToRecordDetail: string
     duck: string
     duckDetail: string
+    wheelChooseHint: string
+    wheelClearHint: string
     wheelNote: string
     inUse: string
   }

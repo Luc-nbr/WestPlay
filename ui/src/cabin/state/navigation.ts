@@ -36,7 +36,7 @@ const SIDEBAR_SLOTS: readonly (readonly AppId[])[] = [
   ['maps'],
   ['music', 'spotify', 'youtubeMusic', 'player', 'podcasts'],
   ['phone', 'messages'],
-  ['calendar', 'weather', 'settings', 'safari'],
+  ['calendar', 'weather', 'settings', 'safari', 'discord'],
 ]
 
 /** At most this many: the fourth (Calendar, Weather, Settings or Safari) only where the screen has room

@@ -182,6 +182,8 @@ export const words: CompanionWords = {
     pushToRecordDetail: "Hold to record, let go and it plays through the bus at once; a wheel button can too (Wheel buttons)",
     duck: "Music off while announcing",
     duckDetail: "The music fades out as you announce, and back in when you’re done",
+    wheelChooseHint: "Bind a wheel button: click, then press it",
+    wheelClearHint: "right-click to clear",
     wheelNote: "Click Choose, then press the button on your wheel or button box. A button does one thing; it works whenever Dashly runs.",
     inUse: 'Cette touche sert déjà à : {action}.',
   },

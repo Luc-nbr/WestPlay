@@ -125,6 +125,9 @@ pub struct Status {
     /// The same of Spotify: signed in or not (`None`: not known, Spotify not run yet), its sign-in window open.
     pub spotify_signed_in: Option<bool>,
     pub spotify_signing_in: bool,
+    /// Discord (the cab's Discord app, on Safari's profile): signed in or not, as last found; its window open.
+    pub discord_signed_in: Option<bool>,
+    pub discord_signing_in: bool,
     /// The same of Apple Music: signed in or not (`None`: not known, Apple Music not run yet), Apple's sign-in
     /// window open.
     pub apple_music_signed_in: Option<bool>,
@@ -167,6 +170,7 @@ pub struct AccountRequests {
     pub youtube: AccountRequest,
     pub spotify: AccountRequest,
     pub apple_music: AccountRequest,
+    pub discord: AccountRequest,
 }
 
 /// One service's request, the latest not carried out yet.
@@ -491,6 +495,9 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
     let mut spotify: Option<spotify::Spotify> = None;
     let mut spotify_state: Option<spotify::State> = None;
     let mut spotify_signing_in = false;
+    // Discord's sign-in window, and the hidden page that finds out whether it's signed in (and since when it loads).
+    let mut discord_window: Option<signin::SignInWindow> = None;
+    let mut discord_check: Option<(OffscreenWebView, Instant, std::rc::Rc<std::cell::Cell<Option<bool>>>, bool)> = None;
     // Each service's sign-in confirming after its window closed signed in (youtube.rs, spotify.rs).
     let (mut youtube_window_open, mut youtube_confirming) = (false, false);
     let mut spotify_confirming = false;
@@ -610,6 +617,74 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                 AccountAction::SignOut => spotify::Command::SignOut,
                 AccountAction::Check => spotify::Command::Start,
             });
+        }
+        // Discord's, on Safari's profile: its window to sign in; its data there cleared to sign out; a page of
+        // its, hidden, to know whether it's signed in (its sign-in kept in the page's storage, not a cookie).
+        if let Some(action) = config.accounts.discord.take()
+            && let Some(browser) = start_safari(&mut safari, &config, &webview)
+        {
+            match action {
+                AccountAction::SignIn => match &discord_window {
+                    Some(window) => window.bring_forward(),
+                    None => match signin::SignInWindow::open(browser.environment(), &signin::DISCORD) {
+                        Ok(window) => {
+                            discord_window = Some(window);
+                            status.discord_signing_in = true;
+                            (config.on_status)(&status);
+                        }
+                        Err(e) => log!("discord: the sign-in window can't open: {e}"),
+                    },
+                },
+                AccountAction::SignOut | AccountAction::Check => {
+                    match OffscreenWebView::in_environment(&stage, 320, 200, browser.environment().clone()) {
+                        Ok(view) => {
+                            if action == AccountAction::SignOut {
+                                let clear = r#"{"origin":"https://discord.com","storageTypes":"all"}"#;
+                                let _ = view.devtools("Storage.clearDataForOrigin", clear);
+                                browser.reload_discord();
+                                log!("discord: signed out");
+                            }
+                            let _ = view.navigate("https://discord.com/robots.txt");
+                            discord_check = Some((view, Instant::now(), Default::default(), false));
+                        }
+                        Err(e) => log!("discord: can't look whether it's signed in: {e}"),
+                    }
+                }
+            }
+        }
+        if let Some(window) = &discord_window {
+            let progress = window.progress();
+            if progress != signin::Progress::Signing {
+                if progress == signin::Progress::SignedIn {
+                    log!("discord: signed in");
+                    status.discord_signed_in = Some(true);
+                    if let Some(browser) = &safari {
+                        browser.reload_discord();
+                    }
+                }
+                discord_window = None;
+                status.discord_signing_in = false;
+                (config.on_status)(&status);
+            }
+        }
+        if let Some((view, since, answer, asked)) = &mut discord_check {
+            if !*asked && since.elapsed() >= Duration::from_secs(3) {
+                *asked = true;
+                let told = answer.clone();
+                let _ = view.run_script("localStorage.getItem('token') !== null", move |json| {
+                    told.set(Some(json.trim() == "true"));
+                });
+            }
+            let found = answer.get();
+            if found.is_some() || since.elapsed() >= Duration::from_secs(15) {
+                discord_check = None;
+                if let Some(signed_in) = found
+                    && status.discord_signed_in != Some(signed_in)
+                {
+                    status.discord_signed_in = Some(signed_in);
+                    (config.on_status)(&status);
+                }
+            }
         }
         if let Some(action) = config.accounts.apple_music.take()
             && let Some(player) = start_apple_music(&mut apple_music, &stage, &config)

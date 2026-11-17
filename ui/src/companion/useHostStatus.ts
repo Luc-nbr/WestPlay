@@ -35,6 +35,8 @@ export interface HostStatus {
   /** The same of Spotify: signed in or not (`null`: not known yet), and its sign-in window open. */
   spotifySignedIn: boolean | null
   spotifySigningIn: boolean
+  discordSignedIn: boolean | null
+  discordSigningIn: boolean
   /** The same of Apple Music: signed in or not (`null`: not known yet), and Apple's sign-in window open. */
   appleMusicSignedIn: boolean | null
   appleMusicSigningIn: boolean
@@ -161,6 +163,21 @@ export function spotifySignOut(): Promise<void> {
 /** Runs Spotify's web player (hidden), so the status says whether it's signed in. */
 export function spotifyCheck(): Promise<void> {
   return call('spotify_check')
+}
+
+/** Opens Discord's sign-in in a window on the desktop (the cab's Discord app's profile). */
+export function discordSignIn(): Promise<void> {
+  return call('discord_sign_in')
+}
+
+/** Signs Discord out. */
+export function discordSignOut(): Promise<void> {
+  return call('discord_sign_out')
+}
+
+/** Finds out (hidden) whether Discord is signed in. */
+export function discordCheck(): Promise<void> {
+  return call('discord_check')
 }
 
 /** Opens Apple's sign-in for Apple Music in a window on the desktop. */

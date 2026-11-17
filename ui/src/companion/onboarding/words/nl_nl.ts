@@ -170,6 +170,12 @@ export const words: Words = {
     finishInWindow: 'Rond het inloggen af in het Spotify-venster',
     signingIn: { title: 'Inloggen bij Spotify', text: 'Ga verder in het Spotify-venster' },
   },
+  discord: {
+    title: "Inloggen bij Discord",
+    sub: "Optioneel. Log in om met Discord te bellen en streams te kijken op het scherm van de vrachtwagen. Je logt in bij Discord in een apart venster; Dashly ziet je account nooit.",
+    finishInWindow: "Rond het inloggen af in het Discord-venster",
+    signingIn: { title: "Inloggen bij Discord", text: "Ga verder in het Discord-venster" },
+  },
   appleMusic: {
     title: 'Inloggen bij Apple Music',
     sub: 'Optioneel. Log in om Apple Music met je eigen playlists en bibliotheek op het scherm van de vrachtwagen te luisteren. Je logt in bij Apple Music in een apart venster; Dashly ziet je account nooit.',

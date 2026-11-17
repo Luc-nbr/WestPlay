@@ -488,6 +488,7 @@ export const strings: Strings = {
     youtubeMusic: 'YouTube Music',
     player: 'Player',
     safari: 'Safari',
+    discord: 'Discord',
     podcasts: '播客',
     phone: '电话',
     messages: '信息',

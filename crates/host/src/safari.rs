@@ -17,7 +17,8 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use webview2_com::Microsoft::Web::WebView2::Win32::{
-    COREWEBVIEW2_BROWSING_DATA_KINDS_ALL_PROFILE, COREWEBVIEW2_PERMISSION_STATE_DENY, COREWEBVIEW2_SCRIPT_DIALOG_KIND,
+    COREWEBVIEW2_BROWSING_DATA_KINDS_ALL_PROFILE, COREWEBVIEW2_PERMISSION_KIND_MICROPHONE,
+    COREWEBVIEW2_PERMISSION_KIND_UNKNOWN_PERMISSION, COREWEBVIEW2_PERMISSION_STATE_ALLOW, COREWEBVIEW2_PERMISSION_STATE_DENY, COREWEBVIEW2_SCRIPT_DIALOG_KIND,
     COREWEBVIEW2_SCRIPT_DIALOG_KIND_ALERT, COREWEBVIEW2_SCRIPT_DIALOG_KIND_BEFOREUNLOAD,
     COREWEBVIEW2_SCRIPT_DIALOG_KIND_CONFIRM, COREWEBVIEW2_SCRIPT_DIALOG_KIND_PROMPT, ICoreWebView2, ICoreWebView2_4,
     ICoreWebView2_13, ICoreWebView2_15, ICoreWebView2_18, ICoreWebView2Deferral, ICoreWebView2Environment,
@@ -377,6 +378,17 @@ struct Events {
     dialog_told: bool,
 }
 
+impl Tab {
+    /// Whether the page is Discord's (discord.com and its subdomains): the cab's Discord app.
+    fn is_discord(&self) -> bool {
+        let url = self.told.as_ref().map_or(String::new(), |told| told.url.clone());
+        url.split("://")
+            .nth(1)
+            .and_then(|rest| rest.split(['/', ':', '?']).next())
+            .is_some_and(|host| host == "discord.com" || host.ends_with(".discord.com"))
+    }
+}
+
 struct Tab {
     id: u32,
     view: OffscreenWebView,
@@ -621,8 +633,9 @@ impl Safari {
                     }
                 }
             }
-            Command::Pause => self.post_all(r#"{"action":"pauseMedia"}"#),
-            Command::Resume => self.post_all(r#"{"action":"resumeMedia"}"#),
+            // Discord's call goes on through the music and the game's pauses (the cab's Discord app): not paused.
+            Command::Pause => self.post_media(r#"{"action":"pauseMedia"}"#),
+            Command::Resume => self.post_media(r#"{"action":"resumeMedia"}"#),
             Command::Level { level } => {
                 let level = if level.is_finite() { level.clamp(0.0, 1.0) } else { 1.0 };
                 if self.told.level != Some(level) {
@@ -1062,8 +1075,28 @@ impl Safari {
         }
     }
 
+    /// Safari's WebView2 environment (its profile: the cab's Discord's too, for its sign-in window).
+    pub fn environment(&self) -> &ICoreWebView2Environment {
+        &self.environment
+    }
+
+    /// Discord's pages loaded again (signed in or out in its window since).
+    pub fn reload_discord(&self) {
+        for tab in self.tabs.iter().filter(|tab| tab.is_discord()) {
+            let _ = tab.view.reload();
+        }
+    }
+
+    /// To every tab but Discord's: its call plays on with the music.
+    fn post_media(&self, message: &str) {
+        for tab in self.tabs.iter().filter(|tab| !tab.is_discord()) {
+            let _ = tab.view.post_json(message);
+        }
+    }
+
+    /// Playing, for the cab: Discord's sound (a call) isn't the music, so the music apps play on beside it.
     fn tell_playing(&mut self) {
-        let playing = self.tabs.iter().any(|tab| tab.playing);
+        let playing = self.tabs.iter().any(|tab| tab.playing && !tab.is_discord());
         if playing != self.playing {
             self.playing = playing;
             self.reports.push(Report::Playing(playing));
@@ -1445,7 +1478,23 @@ fn follow(view: &ICoreWebView2, events: &Rc<RefCell<Events>>) -> windows::core::
         view.add_PermissionRequested(
             &PermissionRequestedEventHandler::create(Box::new(move |_, args| {
                 if let Some(args) = args {
-                    args.SetState(COREWEBVIEW2_PERMISSION_STATE_DENY)?;
+                    // Discord's calls hear the player's microphone (the cab's Discord app); every other permission,
+                    // and every other site's, refused.
+                    let mut kind = COREWEBVIEW2_PERMISSION_KIND_UNKNOWN_PERMISSION;
+                    args.PermissionKind(&mut kind)?;
+                    let mut uri = PWSTR::null();
+                    args.Uri(&mut uri)?;
+                    let uri = webview2_com::take_pwstr(uri);
+                    let discord = uri
+                        .split("://")
+                        .nth(1)
+                        .and_then(|rest| rest.split(['/', ':', '?']).next())
+                        .is_some_and(|host| host == "discord.com" || host.ends_with(".discord.com"));
+                    let allowed = discord && kind == COREWEBVIEW2_PERMISSION_KIND_MICROPHONE;
+                    if allowed {
+                        log!("safari: Discord may use the microphone");
+                    }
+                    args.SetState(if allowed { COREWEBVIEW2_PERMISSION_STATE_ALLOW } else { COREWEBVIEW2_PERMISSION_STATE_DENY })?;
                 }
                 Ok(())
             })),

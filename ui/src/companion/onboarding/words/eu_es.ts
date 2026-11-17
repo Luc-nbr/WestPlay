@@ -170,6 +170,12 @@ export const words: Words = {
     finishInWindow: 'Amaitu saio-hasiera Spotify-ren leihoan',
     signingIn: { title: 'Spotify-n saioa hasten', text: 'Jarraitu Spotify-ren leihoan' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Hasi saioa Apple Music-en',
     sub: 'Aukerakoa. Hasi saioa Apple Music kamioiaren pantailan entzuteko, zure zerrenda eta liburutegiarekin. Saioa Apple Music-en leiho bereizi batean hasten da, eta Dashly-k ez ditu inoiz zure kontuaren datuak ikusten.',

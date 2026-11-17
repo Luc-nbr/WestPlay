@@ -171,6 +171,12 @@ export const words: Words = {
     finishInWindow: 'Ολοκλήρωσε τη σύνδεση στο παράθυρο του Spotify',
     signingIn: { title: 'Σύνδεση στο Spotify', text: 'Συνέχισε στο παράθυρο του Spotify' },
   },
+  discord: {
+    title: "Sign in to Discord",
+    sub: "Optional. Sign in to call and watch streams with Discord on the truck’s screen. You sign in to Discord in a separate window; Dashly never sees your account.",
+    finishInWindow: "Finish signing in in the Discord window",
+    signingIn: { title: "Signing in to Discord", text: "Continue in the Discord window" },
+  },
   appleMusic: {
     title: 'Σύνδεση στο Apple Music',
     sub: 'Προαιρετικό. Συνδέσου για να ακούς Apple Music στην οθόνη του φορτηγού, με τις δικές σου λίστες αναπαραγωγής και τη βιβλιοθήκη σου. Η σύνδεση στο Apple Music γίνεται σε ξεχωριστό παράθυρο, και το Dashly δεν βλέπει ποτέ τον λογαριασμό σου.',

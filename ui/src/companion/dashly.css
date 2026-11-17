@@ -201,3 +201,90 @@
     box-shadow: 0 0 4px rgb(255 69 58 / 0.3);
   }
 }
+
+/* A key and a wheel button side by side. */
+.dashly-binds {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A wheel button: a round with a wheel; bound, blue with its number; choosing, pulsing. */
+.dashly-wheel {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--fill-strong);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    background 250ms ease,
+    color 250ms ease,
+    transform 350ms var(--spring);
+}
+
+.dashly-wheel:hover {
+  background: rgb(255 255 255 / 0.18);
+  color: var(--text);
+}
+
+.dashly-wheel:active {
+  transform: scale(0.9);
+}
+
+.dashly-wheel svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.dashly-wheel[data-bound] {
+  background: rgb(59 107 255 / 0.22);
+  color: var(--blue);
+}
+
+.dashly-wheel b {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: var(--blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.dashly-wheel[data-learning] {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 0 16px var(--blue-glow);
+  animation: dashly-recording 1.1s ease-in-out infinite var(--held, running);
+}
+
+/* "powered by MOF Technologies", at the foot of the sections. */
+.dashly-powered {
+  margin-top: auto;
+  padding: 0 12px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+
+.dashly-powered b {
+  font-weight: 600;
+  color: var(--text-dim);
+}

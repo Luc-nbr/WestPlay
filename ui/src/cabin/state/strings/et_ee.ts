@@ -511,6 +511,7 @@ export const strings: Strings = {
     youtubeMusic: 'YouTube Music',
     player: 'Player',
     safari: 'Safari',
+    discord: 'Discord',
     podcasts: 'Taskuhäälingud',
     phone: 'Telefon',
     messages: 'Sõnumid',

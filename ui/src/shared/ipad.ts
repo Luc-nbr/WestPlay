@@ -77,11 +77,32 @@ export function installIpad(): void {
 
   const listeners = new Set<Listener>()
   const queued: string[] = []
+  // Connected before: Dashly may have started again since, a newer build of it (a new app, a fix). The page asks
+  // for its own address again, and loads it anew if its scripts aren't these any more.
+  let connectedBefore = false
+  const ourScripts = () =>
+    [...document.querySelectorAll<HTMLScriptElement>('script[type="module"][src]')].map(
+      (script) => new URL(script.src, location.href).pathname,
+    )
+  const reloadIfNewer = async () => {
+    try {
+      const page = await (await fetch('/', { cache: 'no-store' })).text()
+      const theirs = [...page.matchAll(/<script[^>]+type="module"[^>]+src="([^"]+)"/g)].map(
+        (match) => new URL(match[1], location.href).pathname,
+      )
+      const ours = ourScripts()
+      if (theirs.length > 0 && theirs.some((src) => !ours.includes(src))) location.reload()
+    } catch {
+      // Not reachable this moment: the next connection asks again.
+    }
+  }
   const connect = () => {
     const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`)
     ws.binaryType = 'arraybuffer'
     ws.onopen = () => {
       socket = ws
+      if (connectedBefore) void reloadIfNewer()
+      connectedBefore = true
       // WestPlay sends its whole state again (it went on without this page).
       if (listeners.size > 0) ws.send(JSON.stringify({ type: 'ready' }))
       for (const message of queued.splice(0)) ws.send(message)
