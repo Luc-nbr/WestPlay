@@ -32,7 +32,12 @@ import { type Banner, GlassCursor, type Pose, TruckScreen } from './room/TruckSc
 import { useDemo } from './room/useDemo'
 import './companion.css'
 import './dashly.css'
-import { DashlyMark } from '../shared/DashlyMark'
+import './eurohub.css'
+import { EuroHubLogo } from '../shared/EuroHubMark'
+import { Avatar, Profile } from './pages/Profile'
+import { hubWords } from './pages/hubWords'
+import { type OmsiHubState, useOmsiHub } from './omsihub'
+import { StartScreen } from './StartScreen'
 import { defaultMapAddress, GAME_KINDS, GAME_SHORT_NAMES, type GameCheck, type SetupState, setupState } from './setup'
 import { FILES_BASE, useCustomizations } from './customize'
 import { type Offer, useUpdateOffer } from './update'
@@ -98,7 +103,7 @@ export function Companion() {
 const SECTIONS: SectionId[][] = [
   ['screen', 'customize'],
   ['controls', 'announce', 'audio'],
-  ['accounts', 'map', 'tacho', 'touring'],
+  ['profile', 'accounts', 'map', 'tacho', 'touring'],
   ['setup', 'about', 'support'],
 ]
 /** The sections in order: the tutorial's tour goes through them. */
@@ -126,6 +131,7 @@ const SECTION_GLOW: Record<SectionId, string> = {
   support: GLOW.home,
   tacho: GLOW.dashboard,
   touring: GLOW.maps,
+  profile: GLOW.home,
 }
 
 /** How long a page's words take to leave before the next one's arrive. */
@@ -186,6 +192,10 @@ function Room({
   // The player's wallpapers and icon sets, for Customize and the room's screen.
   const { custom, refresh: refreshCustom } = useCustomizations()
   const [updateShown, setUpdateShown] = useState(false)
+  // The start screen, each time the companion opens past its tutorial.
+  const [started, setStarted] = useState(tutorial !== null)
+  const version = useVersion()
+  const account = useOmsiHub()
   const offered = useRef<string | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const arrived = useRef(performance.now() + ARRIVE_MS)
@@ -279,10 +289,10 @@ function Room({
   }
   const roomShown = phase === 'tour' || phase === 'room'
   useEffect(() => {
-    if (!update || phase !== 'room' || offered.current === update.version) return
+    if (!update || phase !== 'room' || !started || offered.current === update.version) return
     offered.current = update.version
     setUpdateShown(true)
-  }, [update, phase])
+  }, [update, phase, started])
 
   // The maps being prepared, worked out once: the Map page's bar and the sidebar show the same.
   const mapProgress = useMapProgress(status)
@@ -360,6 +370,8 @@ function Room({
                 setup={setup}
                 update={update}
                 mapProgress={mapProgress}
+                version={version}
+                account={account}
               />
             )}
             {roomShown && section === 'screen' && <ScreenPage {...page} />}
@@ -374,6 +386,7 @@ function Room({
             {roomShown && section === 'support' && <Support {...page} />}
             {roomShown && section === 'tacho' && <Tachograph {...page} />}
             {roomShown && section === 'touring' && <Touringcar {...page} />}
+            {roomShown && section === 'profile' && <Profile {...page} />}
             {phase === 'tour' && (
               <TourCard cw={cw} section={section} last={section === TOUR[TOUR.length - 1]} next={nextInTour} />
             )}
@@ -392,6 +405,9 @@ function Room({
               <UpdateSheet cw={cw} offer={update} close={() => setUpdateShown(false)} />
             )}
             {phase === 'room' && <FinishUpdate cw={cw} setup={setup} />}
+            {phase === 'room' && !started && (
+              <StartScreen w={hubWords(cw)} version={version} done={() => setStarted(true)} />
+            )}
             {over}
           </ScreenContext.Provider>
         </RoomText.Provider>
@@ -416,6 +432,8 @@ function SectionList({
   setup,
   update,
   mapProgress,
+  version,
+  account,
 }: {
   section: SectionId
   open(section: SectionId): void
@@ -427,10 +445,12 @@ function SectionList({
   setup: SetupState
   update: Offer | null
   mapProgress: MapProgress
+  version: string
+  account: OmsiHubState
 }) {
   const list = useRef<HTMLElement>(null)
   const [lit, setLit] = useState<{ top: number; height: number } | null>(null)
-  const version = useVersion()
+  const hw = hubWords(cw)
   const state = screenState(status)
   const keyName = useKeyName(settings.settings?.interaction.key ?? DEFAULT_KEY, words)
 
@@ -478,23 +498,40 @@ function SectionList({
     support: '',
     tacho: tachoValue(status),
     touring: touringValue(status),
+    profile: account.kind === 'signedIn' ? account.profile.displayName : '',
   }
 
   let place = 2
   return (
-    <nav ref={list} className="cp-list" aria-label="Euro-Hub">
-      <header className="cp-brand ob-in" style={n(0)}>
-        <DashlyMark size={34} />
-        <span>
-          <b>Euro-Hub</b>
-          <span className="cp-state" data-state={state}>
-            <i />
-            {cw.state[state]}
-          </span>
+    <>
+      <header className="eh-bar eh-glass ob-in" style={n(0)}>
+        <button type="button" className="eh-bar-brand" onClick={() => open('screen')}>
+          <EuroHubLogo height={26} />
+        </button>
+        {version && <span className="eh-bar-version">{version}</span>}
+        <span className="cp-state" data-state={state}>
+          <i />
+          {cw.state[state]}
         </span>
+        <span className="eh-bar-fill" />
         <button
           type="button"
-          className="dashly-fullscreen"
+          className="eh-bar-account"
+          data-on={section === 'profile' || undefined}
+          onClick={() => open('profile')}
+        >
+          {account.kind === 'signedIn' ? (
+            <>
+              <Avatar name={account.profile.displayName} src={account.profile.avatar} size={24} />
+              <span>{account.profile.displayName}</span>
+            </>
+          ) : (
+            <span>{hw.signIn}</span>
+          )}
+        </button>
+        <button
+          type="button"
+          className="eh-bar-btn"
           title="F11"
           aria-label="Full screen"
           onClick={() => void call<boolean>('toggle_fullscreen').catch(() => {})}
@@ -504,6 +541,7 @@ function SectionList({
           </svg>
         </button>
       </header>
+      <nav ref={list} className="cp-list eh-sheet" aria-label="Euro-Hub">
       {lit && <i className="cp-lit" style={{ top: lit.top, height: lit.height }} />}
       {SECTIONS.map((group, g) => (
         <div key={g} className="cp-group">
@@ -526,7 +564,8 @@ function SectionList({
       <footer className="dashly-powered ob-in" style={n(place++)}>
         powered by <b>MOF Technologies</b>
       </footer>
-    </nav>
+      </nav>
+    </>
   )
 }
 

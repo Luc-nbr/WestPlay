@@ -126,18 +126,30 @@
   }
 }
 
-/* Euro-Hub's intro: on the logo's navy, its mark glowing blue, its wordmark as the logo writes it. */
+/* Euro-Hub's intro, in Omsi-Hub's look: the night-blue ground, the mark glowing in the accent's blue, the name
+   as the logo writes it ("Euro-" and an orange, slanted "Hub", Hanken Grotesk). */
 .boot:has(.boot-intro) {
-  background: radial-gradient(70% 70% at 50% 50%, #0d2a5c, #0a1f44 45%, #050d1f);
+  background:
+    radial-gradient(80% 60% at 50% 115%, rgb(36 64 150 / 0.6), transparent 70%),
+    linear-gradient(180deg, #070e24 0%, #0a142e 50%, #13214d 100%);
+  font-family: 'Hanken Grotesk Variable', 'Instrument Sans Variable', sans-serif;
 }
 
 .boot-intro-mark img {
-  box-shadow: 0 0 calc(60px * var(--text-scale, 1)) rgb(59 107 255 / 0.55);
+  box-shadow: 0 0 calc(60px * var(--text-scale, 1)) rgb(42 117 247 / 0.55);
 }
 
 .boot-intro-wordmark {
-  text-transform: lowercase;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: #eef1f5;
+}
+
+.boot-intro-wordmark em {
+  padding-right: 0.06em;
+  color: #f58620;
+  font-style: italic;
+  font-weight: 800;
 }
 
 /* "powered by MOF Technologies": under the pair, rising in once Euro-Hub's name is out, leaving with it. */

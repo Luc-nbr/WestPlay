@@ -389,6 +389,7 @@ export type SectionId =
   | 'support'
   | 'tacho'
   | 'touring'
+  | 'profile'
 
 const WORDS: Record<string, CompanionWords> = Object.fromEntries(
   Object.entries(import.meta.glob<CompanionWords>('./[a-z][a-z]_[a-z][a-z].ts', { eager: true, import: 'words' })).map(

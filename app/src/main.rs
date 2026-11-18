@@ -203,6 +203,48 @@ fn open_social(site: Social) {
     });
 }
 
+/// Omsi-Hub's account pages, for an Omsi-Hub account (the start screen, the Profile page).
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum OmsiHubPage {
+    SignUp,
+    Account,
+}
+
+/// Opens one of Omsi-Hub's account pages in the player's browser. The addresses are fixed here.
+#[tauri::command]
+fn open_omsihub(page: OmsiHubPage) {
+    westplay_host::browser::open(match page {
+        OmsiHubPage::SignUp => "https://omsihub.com/account.html#sign-up",
+        OmsiHubPage::Account => "https://omsihub.com/account.html",
+    });
+}
+
+/// Set to end the Google or Discord sign-in waiting in the browser (`omsihub_oauth_cancel`).
+static OMSIHUB_CANCEL: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Signs in to an Omsi-Hub account with Google or Discord in the player's browser
+/// (`westplay_host::omsihub::sign_in`): the code it brings back, for the companion to exchange with its verifier;
+/// or why not (`cancelled`, `timeout`, `failed`).
+#[tauri::command]
+async fn omsihub_oauth(
+    provider: westplay_host::omsihub::Provider,
+    challenge: String,
+    state: String,
+) -> Result<String, String> {
+    OMSIHUB_CANCEL.store(false, std::sync::atomic::Ordering::Relaxed);
+    tauri::async_runtime::spawn_blocking(move || {
+        westplay_host::omsihub::sign_in(provider, &challenge, &state, &OMSIHUB_CANCEL).map_err(str::to_string)
+    })
+    .await
+    .unwrap_or_else(|_| Err("failed".to_string()))
+}
+
+#[tauri::command]
+fn omsihub_oauth_cancel() {
+    OMSIHUB_CANCEL.store(true, std::sync::atomic::Ordering::Relaxed);
+}
+
 /// Where this run's `app.log` is (the About page): Documents\WestPlay\logs, or WestPlay's own data folder where
 /// Documents refused it; `None` if it couldn't be made.
 #[tauri::command]
@@ -299,6 +341,9 @@ fn main() {
             touring_action,
             print_receipt,
             open_social,
+            open_omsihub,
+            omsihub_oauth,
+            omsihub_oauth_cancel,
             app_log_place,
             customize::customize_list,
             customize::add_wallpapers,

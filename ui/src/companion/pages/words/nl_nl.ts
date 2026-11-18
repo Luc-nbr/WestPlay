@@ -15,6 +15,7 @@ export const words: CompanionWords = {
     support: 'Steun mij',
     tacho: 'Tachograaf',
     touring: 'Touringcar',
+    profile: 'Profiel',
   },
   state: {
     starting: 'Bezig met starten…',
@@ -330,6 +331,7 @@ export const words: CompanionWords = {
       support: 'Vind je Euro-Hub leuk, dan kun je hier de ontwikkeling steunen.',
       tacho: 'Een digitale tachograaf: rij- en rusttijden live bijgehouden volgens de EU-regels, met waarschuwingen en een logboek.',
       touring: 'Je eigen touringcarbedrijf: dagtochten en meerdaagse reizen door Europa, met opstapplaatsen, koffiestops en hotels.',
+      profile: 'Je Omsi-Hub-account: log in met hetzelfde account als in Omsi-Hub en zie je profiel, je naam en je vriendcode.',
     },
     finish: 'Klaar',
   },

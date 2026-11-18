@@ -3,11 +3,11 @@
 
 .ob {
   --navy: #0a1f44;
-  --blue: #3b6bff;
-  --blue-glow: rgb(59 107 255 / 0.35);
+  --blue: #2a75f7;
+  --blue-glow: rgb(42 117 247 / 0.35);
   --room: #040a17;
   background:
-    radial-gradient(120% 80% at 0% 0%, rgb(59 107 255 / 0.14), transparent 55%),
+    radial-gradient(120% 80% at 0% 0%, rgb(42 117 247 / 0.14), transparent 55%),
     radial-gradient(90% 70% at 100% 100%, rgb(10 31 68 / 0.95), transparent 60%), var(--room);
 }
 
@@ -40,10 +40,10 @@
 
 /* The section that's open: a capsule of blue light with a bar at its edge, gliding from row to row. */
 .cp-lit {
-  background: linear-gradient(90deg, rgb(59 107 255 / 0.32), rgb(59 107 255 / 0.08));
+  background: linear-gradient(90deg, rgb(42 117 247 / 0.32), rgb(42 117 247 / 0.08));
   box-shadow:
-    inset 0 0 0 1px rgb(59 107 255 / 0.45),
-    0 6px 24px rgb(59 107 255 / 0.22);
+    inset 0 0 0 1px rgb(42 117 247 / 0.45),
+    0 6px 24px rgb(42 117 247 / 0.22);
 }
 
 .cp-lit::before {
@@ -66,55 +66,6 @@
 
 .cp-row:hover:not([data-here]) {
   transform: translateX(4px);
-}
-
-/* ---------- The mark ---------- */
-
-.cp-brand .dashly-mark {
-  flex-shrink: 0;
-  border-radius: 22%;
-  box-shadow: 0 6px 20px var(--blue-glow);
-}
-
-/* Its chevrons draw themselves in, then now and then drive forward a little (held still with the room). */
-.dashly-chevron {
-  stroke-dasharray: 300;
-  stroke-dashoffset: 300;
-  animation:
-    dashly-draw 900ms var(--ease) 300ms forwards,
-    dashly-drive 4s ease-in-out 1.8s infinite;
-  animation-play-state: running, var(--held, running);
-}
-
-.dashly-chevron-b {
-  animation-delay: 480ms, 1.98s;
-}
-
-@keyframes dashly-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes dashly-drive {
-  0%,
-  72%,
-  100% {
-    transform: translateX(0);
-  }
-  82% {
-    transform: translateX(28px);
-  }
-  90% {
-    transform: translateX(-6px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dashly-chevron {
-    stroke-dashoffset: 0;
-    animation: none;
-  }
 }
 
 /* Eleven sections in a 600-high window: rows and groups a little closer. */
@@ -249,7 +200,7 @@
 }
 
 .dashly-wheel[data-bound] {
-  background: rgb(59 107 255 / 0.22);
+  background: rgb(42 117 247 / 0.22);
   color: var(--blue);
 }
 
@@ -339,7 +290,7 @@
   /* As tall as fits beside the page's other groups (the curve kept in proportion, centred). */
   max-height: 36svh;
   border-radius: 14px;
-  background: radial-gradient(120% 90% at 20% 0%, rgb(59 107 255 / 0.16), transparent 60%), rgb(4 10 23 / 0.7);
+  background: radial-gradient(120% 90% at 20% 0%, rgb(42 117 247 / 0.16), transparent 60%), rgb(4 10 23 / 0.7);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
   touch-action: none;
   user-select: none;
@@ -391,7 +342,7 @@
 }
 
 .dashly-eq-halo {
-  fill: rgb(59 107 255 / 0.18);
+  fill: rgb(42 117 247 / 0.18);
   opacity: 0;
   transition: opacity 200ms ease;
 }
@@ -440,41 +391,4 @@
   color: var(--text-faint);
   font-size: 10.5px;
   font-weight: 600;
-}
-
-/* The window full screen, or back (F11 too): a small round at the brand's end. */
-.cp-brand {
-  position: relative;
-}
-
-.dashly-fullscreen {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  margin-left: auto;
-  padding: 0;
-  border: 0;
-  border-radius: 99px;
-  background: var(--fill);
-  color: var(--text-dim);
-  cursor: pointer;
-  transition:
-    background 200ms ease,
-    color 200ms ease;
-}
-
-.dashly-fullscreen:hover {
-  background: var(--fill-strong);
-  color: var(--text);
-}
-
-.dashly-fullscreen svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }

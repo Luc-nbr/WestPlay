@@ -24,6 +24,7 @@ mod lyrics;
 mod map_process;
 pub mod maps;
 mod music_folder;
+pub mod omsihub;
 mod performance;
 mod planner;
 mod play_log;

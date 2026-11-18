@@ -173,12 +173,16 @@ Simulator version 1.62 (other versions may work; the companion says when one is 
 
 ## Privacy
 
-WestPlay has no servers, no accounts of its own and no analytics. It doesn't collect or send anything about you.
+Euro-Hub has no servers of its own and no analytics. The full text is its
+[Privacy Statement](ui/src/companion/privacy.md), which the app shows before you first sign in.
 
-- You sign in to Apple Music, Spotify and YouTube on their own pages, in WestPlay's own browser profile on your PC,
-  as you would in a browser. WestPlay keeps no account data of its own.
+- You sign in to Apple Music, Spotify and YouTube on their own pages, in Euro-Hub's own browser profile on your PC,
+  as you would in a browser. Euro-Hub keeps no account data of its own.
+- Signing in with an Omsi-Hub account (email and password, Google or Discord) is optional. Euro-Hub then reads your
+  Omsi-Hub profile (name, friend code, photo, email) from Omsi-Hub's account service and keeps the sign-in on your PC
+  until you sign out. Omsi-Hub's own Privacy Statement covers the account itself.
 - Your map is built from your game on your PC and stays there.
-- WestPlay talks to the services you use, to GitHub to look for updates, and to Kreosus only if you open
+- Euro-Hub talks to the services you use, to GitHub to look for updates, and to Kreosus only if you open
   "Support me".
 
 ## Support

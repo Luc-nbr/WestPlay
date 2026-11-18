@@ -101,7 +101,7 @@ function BannerView({ banner }: { banner: Banner | null }) {
     >
       {text && (
         <>
-          <img src="/dashly-mark.svg" alt="" />
+          <img src="/euro-hub-mark.svg" alt="" />
           <div className="ts-banner-words">
             {leaving && <BannerWords banner={leaving} leaving />}
             <BannerWords key={text.title} banner={text} entering={messages > 0} />

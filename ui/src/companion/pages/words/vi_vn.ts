@@ -15,6 +15,7 @@ export const words: CompanionWords = {
     support: 'Ủng hộ tôi',
     tacho: 'Tachograph',
     touring: 'Coach company',
+    profile: 'Profile',
   },
   state: {
     starting: 'Đang khởi động…',
@@ -327,6 +328,7 @@ export const words: CompanionWords = {
       support: 'Nếu bạn thích Euro-Hub, bạn có thể ủng hộ việc phát triển tại đây.',
       tacho: 'A digital tachograph: driving and rest times kept live by the EU rules, with warnings and a log.',
       touring: 'Your own coach-travel company: day trips and multi-day tours across Europe, with pick-up points, coffee stops and hotels.',
+      profile: 'Your Omsi-Hub account: sign in with the same account as in Omsi-Hub and see your profile, your name and your friend code.',
     },
     finish: 'Xong',
   },

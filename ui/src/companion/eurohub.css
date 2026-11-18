@@ -1,0 +1,1093 @@
+/* Euro-Hub in Omsi-Hub's look (its sister product, omsihub.com; Omsi-Hub's ui/css/tokens.css and hub.css): the
+   night-blue ground, a glass bar along the top, the choices on sheets, the accent's blue for what's chosen and
+   the one action that goes on, Hanken Grotesk for every word, the logo's orange "Hub". Loaded last, over
+   room.css, companion.css and dashly.css. */
+
+@import '@fontsource-variable/hanken-grotesk';
+@import '@fontsource-variable/hanken-grotesk/wght-italic.css';
+
+.ob {
+  --eh-accent: #2a75f7;
+  --eh-accent-hover: #4888f8;
+  --eh-accent-deep: #2361cd;
+  --eh-accent-text: #7ba9fa;
+  --eh-orange: #f58620;
+  --eh-ground: #0a142e;
+  --eh-panel: #141a26;
+  --eh-field: #1b2231;
+  --eh-hover: #212836;
+  --eh-selected: #262e3e;
+  --eh-edge: rgb(255 255 255 / 0.1);
+  --eh-logo-ink: #eef1f5;
+  /* the room's own names, in Omsi-Hub's colours */
+  --blue: var(--eh-accent);
+  --blue-glow: rgb(42 117 247 / 0.35);
+  --text: #e8ebf2;
+  --text-dim: #959db0;
+  --text-faint: #60687a;
+  --fill: rgb(255 255 255 / 0.05);
+  --fill-strong: rgb(255 255 255 / 0.09);
+  --hairline: rgb(255 255 255 / 0.08);
+  --green: #34b26e;
+  --orange: #e8aa46;
+  --red: #d93a30;
+  font-family: 'Hanken Grotesk Variable', 'Hanken Grotesk', 'Instrument Sans Variable', sans-serif;
+  background:
+    radial-gradient(90% 70% at 50% 115%, rgb(36 64 150 / 0.55), transparent 65%),
+    radial-gradient(70% 60% at 0% 0%, rgb(42 117 247 / 0.12), transparent 60%),
+    linear-gradient(180deg, #081027 0%, var(--eh-ground) 55%, #101d45 100%);
+}
+
+/* (clipped, not hidden: a field taking focus can't scroll the room sideways to the screen standing past its edge) */
+.cp {
+  overflow: clip;
+}
+
+.cp-blank {
+  background: #0a142e;
+  font-family: 'Hanken Grotesk Variable', sans-serif;
+}
+
+/* ---------- Glass and sheets ---------- */
+
+/* A clear pane over the ground, smoked under white words, light caught along its rim in the accent. */
+.eh-glass {
+  position: relative;
+  background: rgb(6 12 30 / 0.55);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: inset 0 0 8px rgb(42 117 247 / 0.4);
+}
+
+.eh-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgb(42 117 247 / 0.55) 0%,
+    rgb(255 255 255 / 0.07) 22%,
+    rgb(255 255 255 / 0.07) 78%,
+    rgb(42 117 247 / 0.55) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.eh-sheet,
+.cp .ob-words[data-place='page'],
+.cp-sheet,
+.cp-tour {
+  background: var(--eh-panel);
+  border: 1px solid var(--eh-edge);
+  border-radius: 14px;
+  box-shadow: 0 2px 26px rgb(0 0 0 / 0.45);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ---------- The bar along the top ---------- */
+
+.eh-bar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding: 0 8px 0 12px;
+  border-radius: 10px;
+}
+
+.eh-bar-brand {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.eh-bar-version {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.eh-bar .cp-state {
+  margin: 0 0 0 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.05);
+  font-size: 12px;
+}
+
+.eh-bar-fill {
+  flex: 1;
+}
+
+.eh-bar-account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+  height: 34px;
+  padding: 0 14px 0 5px;
+  border: 0;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.06);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.eh-bar-account > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eh-bar-account:has(> span:only-child) {
+  padding-left: 14px;
+  color: var(--eh-accent-text);
+}
+
+.eh-bar-account:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.eh-bar-account[data-on] {
+  box-shadow: inset 0 0 0 1px var(--eh-accent);
+}
+
+.eh-bar-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.eh-bar-btn:hover {
+  color: var(--text);
+  background: rgb(255 255 255 / 0.06);
+}
+
+.eh-bar-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- The logo ---------- */
+
+.eh-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--eh-h) * 0.22);
+  height: var(--eh-h);
+  --eh-logo-ink: #eef1f5;
+}
+
+.eh-logo .eh-mark {
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.eh-word {
+  color: var(--eh-logo-ink);
+  font-size: calc(var(--eh-h) * 0.6);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.eh-word em {
+  padding-right: 0.06em;
+  color: #f58620;
+  font-style: italic;
+  font-weight: 800;
+}
+
+/* The ring's road running on under the name, as on Omsi-Hub's banner. */
+.eh-logo[data-road] {
+  align-items: flex-start;
+  gap: calc(var(--eh-h) * 0.16);
+}
+
+.eh-logo[data-road] .eh-word {
+  margin-top: calc(var(--eh-h) * 0.1);
+}
+
+.eh-logo[data-road]::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--eh-h) * 0.879);
+  left: calc(var(--eh-h) * 0.6);
+  right: calc(var(--eh-h) * -0.04);
+  height: calc(var(--eh-h) * 0.121);
+  border-radius: 99px;
+  background: #2a75f7;
+  transform-origin: left;
+  animation: eh-road 900ms var(--ease) 500ms backwards;
+}
+
+/* The stops on the road: white-rimmed rounds, a truck, a trailer and a coach. */
+.eh-stops i {
+  position: absolute;
+  top: calc(var(--eh-h) * 0.94 - var(--eh-h) * 0.22);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: calc(var(--eh-h) * 0.44);
+  height: calc(var(--eh-h) * 0.44);
+  border: calc(var(--eh-h) * 0.03) solid #fff;
+  border-radius: 50%;
+  background: var(--eh-stop-bg);
+  color: #fff;
+  animation: eh-stop 500ms var(--spring) backwards;
+}
+
+.eh-stops svg {
+  width: 66%;
+  height: 66%;
+  fill: currentColor;
+}
+
+.eh-stops [data-kind='truck'] {
+  --eh-stop-bg: #e43334;
+  left: calc(var(--eh-h) * 0.62);
+  animation-delay: 900ms;
+}
+
+.eh-stops [data-kind='trailer'] {
+  --eh-stop-bg: #0f7e3a;
+  left: calc(50% + var(--eh-h) * 0.2);
+  animation-delay: 1100ms;
+}
+
+.eh-stops [data-kind='coach'] {
+  --eh-stop-bg: #464649;
+  right: calc(var(--eh-h) * -0.1);
+  animation-delay: 1300ms;
+}
+
+@keyframes eh-stop {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes eh-road {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* The ring draws itself in. */
+.eh-ring {
+  stroke-dasharray: 1150;
+  stroke-dashoffset: 0;
+  animation: eh-ring 1100ms var(--ease) 150ms backwards;
+}
+
+@keyframes eh-ring {
+  from {
+    stroke-dashoffset: 1150;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eh-ring,
+  .eh-logo[data-road]::after {
+    animation: none;
+  }
+}
+
+/* ---------- The sections, a sheet at the left ---------- */
+
+.cp-list.eh-sheet {
+  top: 76px;
+  bottom: 14px;
+  left: 14px;
+  width: 216px;
+  gap: 6px;
+  padding: 10px 8px;
+  overflow: hidden;
+}
+
+.cp-group + .cp-group {
+  padding-top: 6px;
+  border-top: 1px solid var(--hairline);
+}
+
+.cp-list .cp-row {
+  height: 30px;
+  padding: 0 10px 0 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.cp-row b {
+  font-weight: 600;
+}
+
+.cp-row:hover:not([data-here]) {
+  background: var(--eh-hover);
+  transform: none;
+}
+
+.cp-lit {
+  left: 8px;
+  right: 8px;
+  border-radius: 8px;
+  background: var(--eh-selected);
+  box-shadow: inset 0 0 0 1px rgb(42 117 247 / 0.45);
+}
+
+.cp-lit::before {
+  left: 4px;
+  width: 3px;
+  background: var(--eh-accent);
+  box-shadow: 0 0 10px var(--eh-accent);
+}
+
+.cp-row[data-here] b {
+  color: #fff;
+}
+
+.dashly-powered {
+  padding: 4px 10px 0;
+}
+
+/* ---------- The page, a sheet beside them ---------- */
+
+.cp .ob-words[data-place='page'] {
+  top: 76px;
+  bottom: 14px;
+  left: 244px;
+  width: 340px;
+  padding: 22px 26px 18px;
+}
+
+.cp[data-phase='room'] .ob-words[data-place='page'] {
+  right: 14px;
+  width: auto;
+}
+
+.cp h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cp .ob-sub {
+  margin-top: 6px;
+  font-size: 13.5px;
+}
+
+.cp .ob-content {
+  margin-top: 16px;
+}
+
+/* The page's cards: Omsi-Hub's, a hairline round a slightly lighter field. */
+.cp .ob-group,
+.cp .ob-key {
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.025);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.cp .ob-key:hover {
+  background: var(--eh-hover);
+}
+
+.ob-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+button.ob-row:hover {
+  background: var(--eh-hover);
+}
+
+/* ---------- Controls ---------- */
+
+.ob-button {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background: var(--eh-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ob-button:hover {
+  background: var(--eh-accent-hover);
+  box-shadow: 0 8px 20px rgb(42 117 247 / 0.35);
+  transform: translateY(-1px);
+}
+
+.ob-button:active {
+  background: var(--eh-accent-deep);
+  transform: translateY(0.5px);
+}
+
+.ob-button[data-glass] {
+  background: var(--eh-field);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--eh-edge);
+}
+
+.ob-button[data-glass]:hover {
+  background: var(--eh-hover);
+  box-shadow:
+    inset 0 0 0 1px var(--eh-edge),
+    0 6px 16px rgb(0 0 0 / 0.18);
+}
+
+.ob-button[data-small] {
+  height: 32px;
+  border-radius: 8px;
+}
+
+.ob-spinner {
+  border-color: rgb(255 255 255 / 0.25);
+  border-top-color: #fff;
+}
+
+.ob-back {
+  border-radius: 10px;
+  background: var(--eh-field);
+  box-shadow: inset 0 0 0 1px var(--eh-edge);
+}
+
+.ob-switch {
+  background: rgb(255 255 255 / 0.18);
+}
+
+.ob-switch[data-on] {
+  background: var(--eh-accent);
+  box-shadow: 0 0 14px var(--blue-glow);
+}
+
+.ob-slider-fill {
+  background: var(--eh-accent);
+}
+
+.ob-slider::before {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.cz-segments {
+  background: var(--eh-field);
+  border-radius: 8px;
+}
+
+.cz-segments button[aria-checked='true'] {
+  background: var(--eh-accent);
+  color: #fff;
+}
+
+.cz-wallpaper[data-chosen] img {
+  box-shadow:
+    0 0 0 2px var(--eh-panel),
+    0 0 0 4px var(--eh-accent);
+}
+
+.cp-keybind[data-listening] {
+  box-shadow: inset 0 0 0 2px var(--eh-accent);
+}
+
+.cp .ob-input,
+.cp input[type='text'],
+.cp input[type='email'],
+.cp input[type='password'],
+.cp input[type='number'],
+.cp select {
+  font-family: inherit;
+}
+
+/* ---------- Sheets over the room ---------- */
+
+.cp-veil {
+  background: rgb(4 7 15 / 0.62);
+}
+
+.cp-sheet {
+  border-radius: 14px;
+}
+
+.cp-sheet .ob-group,
+.cp-sheet-notes {
+  background: rgb(255 255 255 / 0.03);
+}
+
+.cp-tour {
+  top: auto;
+  bottom: 14px;
+  left: 14px;
+  width: 216px;
+}
+
+/* ---------- The start screen ---------- */
+
+.eh-start {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 60% at 50% 110%, rgb(36 64 150 / 0.6), transparent 70%),
+    radial-gradient(60% 50% at 50% 30%, rgb(42 117 247 / 0.1), transparent 70%),
+    linear-gradient(180deg, #070e24 0%, #0a142e 50%, #13214d 100%);
+  transition:
+    opacity 420ms ease,
+    transform 420ms var(--ease);
+}
+
+.eh-start[data-leaving] {
+  opacity: 0;
+  transform: scale(1.03);
+}
+
+/* Roads through the night, faintly, drawing themselves. */
+.eh-start-roads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.eh-start-roads path {
+  fill: none;
+  stroke: rgb(42 117 247 / 0.14);
+  stroke-width: 2;
+  stroke-dasharray: 1800;
+  animation: eh-roads 2600ms var(--ease) backwards;
+}
+
+.eh-start-roads path:nth-child(2) {
+  animation-delay: 200ms;
+}
+
+.eh-start-roads path:nth-child(3) {
+  stroke: rgb(255 255 255 / 0.05);
+  animation-delay: 400ms;
+}
+
+.eh-start-roads path:nth-child(4) {
+  stroke: rgb(255 255 255 / 0.05);
+  animation-delay: 600ms;
+}
+
+@keyframes eh-roads {
+  from {
+    stroke-dashoffset: 1800;
+  }
+}
+
+.eh-start-in {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+}
+
+.eh-start-logo {
+  animation: ob-in 900ms var(--ease) backwards;
+}
+
+.eh-start-tagline {
+  margin-top: 14px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  animation: ob-in 900ms var(--ease) 250ms backwards;
+}
+
+.eh-start-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 380px;
+  margin-top: 18px;
+  padding: 22px 26px;
+  border-radius: 14px;
+  box-shadow:
+    0 0 24px rgb(42 117 247 / 0.45),
+    inset 0 0 18px rgb(42 117 247 / 0.35);
+  animation: cp-sheet 800ms var(--spring) 400ms backwards;
+}
+
+.eh-start-card h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.eh-start-card > p {
+  margin-top: -4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.eh-start-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.eh-start-welcome b {
+  margin-top: 6px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.eh-start-welcome > span:not(.eh-avatar) {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.eh-start-welcome .eh-go {
+  align-self: stretch;
+  margin-top: 10px;
+}
+
+.eh-start-foot {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+
+.eh-start-foot b {
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.eh-spinner {
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  margin: 18px;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.2);
+  border-top-color: var(--eh-accent);
+  animation: ob-spin 800ms linear infinite;
+}
+
+/* ---------- Signing in ---------- */
+
+.eh-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eh-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.eh-form label span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.eh-form input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--eh-edge);
+  border-radius: 10px;
+  outline: none;
+  background: var(--eh-field);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.eh-form input:focus {
+  border-color: var(--eh-accent);
+  box-shadow: 0 0 0 3px rgb(42 117 247 / 0.25);
+}
+
+.eh-form-error {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #ff7a70;
+}
+
+.eh-go {
+  position: relative;
+  overflow: hidden;
+  height: 44px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--eh-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+.eh-go:hover:not(:disabled) {
+  background: var(--eh-accent-hover);
+  box-shadow: 0 8px 20px rgb(42 117 247 / 0.35);
+  transform: translateY(-1px);
+}
+
+.eh-go:active:not(:disabled) {
+  background: var(--eh-accent-deep);
+  transform: none;
+}
+
+.eh-go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Light sweeping over it as it's pointed at. */
+.eh-go::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  transform: skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.22), transparent);
+}
+
+.eh-go:hover:not(:disabled)::after {
+  animation: eh-sweep 700ms ease-out;
+}
+
+@keyframes eh-sweep {
+  to {
+    left: 120%;
+  }
+}
+
+.eh-link,
+.eh-ghost {
+  padding: 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.eh-link {
+  color: var(--eh-accent-text);
+  font-weight: 600;
+}
+
+.eh-link:hover {
+  text-decoration: underline;
+}
+
+.eh-ghost {
+  margin-top: 2px;
+  color: var(--text-dim);
+}
+
+.eh-ghost:hover {
+  color: var(--text);
+}
+
+/* ---------- The profile ---------- */
+
+.eh-avatar {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2a75f7, #2361cd);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.eh-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eh-profile-card {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: linear-gradient(120deg, rgb(42 117 247 / 0.2), rgb(42 117 247 / 0.04) 60%);
+  box-shadow: inset 0 0 0 1px rgb(42 117 247 / 0.3);
+}
+
+.eh-profile-card b {
+  display: block;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.eh-profile-card span:not(.eh-avatar) {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.eh-profile-signin {
+  max-width: 380px;
+}
+
+.eh-copy {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--eh-field);
+  color: var(--eh-accent-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.eh-copy:hover {
+  background: var(--eh-hover);
+}
+
+/* ---------- Google and Discord, the privacy statement ---------- */
+
+.eh-providers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.eh-provider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--eh-field);
+  box-shadow: inset 0 0 0 1px var(--eh-edge);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.eh-provider:hover:not(:disabled) {
+  background: var(--eh-hover);
+  transform: translateY(-1px);
+}
+
+.eh-provider svg {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+}
+
+.eh-provider[data-provider='discord'] svg {
+  color: #5865f2;
+}
+
+.eh-provider span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.eh-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.eh-or::before,
+.eh-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.eh-form-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.eh-link-quiet {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.eh-wait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.eh-wait p {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.eh-privacy {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgb(4 7 15 / 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: cp-veil 300ms ease both;
+}
+
+.eh-privacy-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(640px, 100%);
+  max-height: calc(100svh - 56px);
+  padding: 22px 24px;
+  border: 1px solid var(--eh-edge);
+  border-radius: 14px;
+  background: var(--eh-panel);
+  box-shadow: 0 0 24px rgb(42 117 247 / 0.3), 0 30px 80px rgb(0 0 0 / 0.6);
+  text-align: left;
+  animation: cp-sheet 500ms var(--spring) both;
+}
+
+.eh-privacy-sheet h2 {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.eh-privacy-text {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 14px 4px 2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  user-select: text;
+}
+
+.eh-privacy-text h3 {
+  margin: 16px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eh-privacy-text p {
+  margin: 0 0 8px;
+}
+
+.eh-privacy-text ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.eh-privacy-text b {
+  color: var(--text);
+}
+
+.eh-privacy-consent {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.eh-privacy-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.eh-privacy-actions .eh-go {
+  margin: 0;
+  padding: 0 22px;
+}
